@@ -1,6 +1,7 @@
 # AGENTS.md — Vùng FRONTEND (chủ sở hữu: thành viên C – `vothinhungoc7980-coder`)
 
 Quy tắc chung ở `../AGENTS.md` vẫn áp dụng. File này bổ sung cho vùng Frontend.
+Lộ trình, checklist và ca kiểm thử: `../docs/LO_TRINH_FRONTEND.md`. Mô tả 5 trang và code mẫu: `../docs/KE_HOACH_TONG.md`, mục 6.
 
 ## Được sửa
 (Trừ `AGENTS.md` và `CLAUDE.md` trong thư mục này — đó là thông tin chung, chỉ điều phối viên `b4ox` sửa.)
@@ -39,4 +40,4 @@ Thứ tự nạp script trong mỗi trang: `config.js` → `api.js` → `common.
 ## Kiểm tra
 - Chạy bằng Live Server mở từ THƯ MỤC GỐC: `http://127.0.0.1:5500/frontend/index.html` (mock).
 - Console không lỗi đỏ; thử cả `MOCK_FAIL = true`.
-- Bảng ca kiểm thử trong tài liệu "Lộ trình Frontend", mục 6.
+- Bảng ca kiểm thử trong `docs/LO_TRINH_FRONTEND.md`, mục 6.

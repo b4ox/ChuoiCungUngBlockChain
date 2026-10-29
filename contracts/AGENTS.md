@@ -1,6 +1,7 @@
 # AGENTS.md — Vùng CONTRACT (chủ sở hữu: thành viên A – `nhungtrieu2005uh-bot`)
 
 Quy tắc chung ở `../AGENTS.md` vẫn áp dụng. File này bổ sung cho vùng Contract.
+Lộ trình, checklist và ca kiểm thử: `../docs/LO_TRINH_CONTRACT.md`. Code mẫu: `../docs/KE_HOACH_TONG.md`, mục 4.
 
 ## Được sửa
 (Trừ `AGENTS.md` và `CLAUDE.md` trong thư mục này — đó là thông tin chung, chỉ điều phối viên `b4ox` sửa.)
@@ -31,4 +32,4 @@ Không đổi chữ ký hàm, thứ tự enum, thứ tự trường struct, tên
 
 ## Kiểm tra
 - Unit test: `contracts/tests/SupplyChain_test.sol` chạy bằng plugin *Solidity Unit Testing* của Remix.
-- Bảng ca kiểm thử bắt buộc nằm trong tài liệu "Lộ trình Smart Contract", mục 6.
+- Bảng ca kiểm thử bắt buộc nằm trong `docs/LO_TRINH_CONTRACT.md`, mục 6.
