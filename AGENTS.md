@@ -81,12 +81,34 @@ Luật thay đổi:
 - Không thêm thư viện/framework mới khi chưa được người dùng đồng ý; nếu thêm, ghi lý do.
 - Không bao giờ ghi private key, mnemonic, `.env` thật vào code hay commit.
 
-## 5. Git
+## 5. Git — mô hình 3 nhánh cố định
 
-- Nhánh: `master` (bản demo ổn định) ← `dev` (tích hợp) ← nhánh việc `contract/<việc>`, `backend/<việc>`, `frontend/<việc>`.
-- Mọi thay đổi vào `dev`/`master` đi qua Pull Request; chỉ `b4ox` merge.
-- Commit theo mẫu Conventional Commits có scope: `feat(backend): them route products`, `fix(frontend): ...`, `docs(contract): ...`.
-- Agent KHÔNG tự `git push`, KHÔNG commit lên `dev`/`master`, KHÔNG `git push --force`, KHÔNG sửa lịch sử. Chỉ commit khi người dùng yêu cầu.
+| Nhánh | Dùng cho | Ai push |
+| --- | --- | --- |
+| `master` | Bản demo ổn định | Không ai push thẳng; chỉ `b4ox` merge từ `dev` ở mốc M3, M4 |
+| `dev` | Nơi ghép code của cả nhóm | Không ai push thẳng; chỉ nhận Pull Request |
+| `contract` | Mọi việc của vùng Contract | `nhungtrieu2005uh-bot` |
+| `backend` | Mọi việc của vùng Backend **và** việc điều phối (file chung) | `b4ox` |
+| `frontend` | Mọi việc của vùng Frontend | `vothinhungoc7980-coder` |
+
+Không tạo nhánh nào khác. Mỗi người chỉ làm trên đúng nhánh của mình.
+
+Quy trình mỗi phiên làm việc:
+
+1. **Đầu phiên:** `git checkout <nhánh-của-mình>` → `git fetch origin` → `git merge origin/dev`
+   (GitHub Desktop: chọn nhánh → Fetch origin → Branch → Update from dev).
+2. **Trong phiên:** commit nhỏ, thường xuyên, theo mẫu `feat(backend): them route products`, `fix(frontend): ...`, `docs(contract): ...`.
+3. **Cuối phiên:** commit hết → `git push` nhánh của mình (việc dở dang cũng push).
+4. **Xong một phần (1–2 ngày/lần):** mở Pull Request `<nhánh-của-mình>` → `dev`. Zone guard phải xanh, `b4ox` duyệt.
+   Merge bằng **Create a merge commit** (không Squash, không Rebase). Nhánh KHÔNG bị xoá sau khi merge, dùng tiếp.
+
+Quy tắc cho AI agent:
+
+- Đầu mỗi nhiệm vụ chạy `git branch --show-current`. Nhánh phải khớp vùng đang làm
+  (`contracts/` ↔ `contract`, `backend/` ↔ `backend`, `frontend/` ↔ `frontend`).
+  Nếu đang ở `master`, `dev` hoặc nhánh của người khác → **DỪNG**, báo người dùng chuyển nhánh, không sửa file.
+- Agent KHÔNG tự `git push`, KHÔNG tạo/xoá/đổi tên nhánh, KHÔNG `git push --force`, KHÔNG `rebase`, KHÔNG sửa lịch sử.
+  Chỉ commit khi người dùng yêu cầu.
 - Trước khi commit: `git status` chỉ được chứa file trong vùng của mình.
 
 ## 6. Môi trường chạy

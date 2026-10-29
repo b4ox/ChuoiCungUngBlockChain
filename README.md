@@ -34,7 +34,20 @@ cp backend/.env.example backend/.env
 3. `npm run seed` — tạo sẵn thành viên và sản phẩm mẫu.
 4. `npm run backend` — mở `http://localhost:3000`.
 
-## Git
+## Git — 3 nhánh cố định
 
-`master` ← `dev` ← `contract/*`, `backend/*`, `frontend/*`. Mọi thay đổi qua Pull Request vào `dev`; chỉ `b4ox` merge.
+`master` (demo) ← `dev` (ghép code) ← `contract` · `backend` · `frontend`. Mỗi người chỉ làm trên nhánh của mình, không tạo nhánh khác.
+Mọi thay đổi vào `dev` đi qua Pull Request; chỉ `b4ox` merge, bằng **Create a merge commit**.
 PR có file ngoài vùng của người mở sẽ bị workflow **Zone guard** đánh dấu đỏ.
+
+## Quy trình mỗi phiên làm việc
+
+| Lúc | Việc | GitHub Desktop |
+| --- | --- | --- |
+| Đầu phiên | Về nhánh của mình, lấy code mới của cả nhóm | Chọn nhánh → Fetch origin → Branch → Update from dev |
+| Trong phiên | Chỉ sửa file trong vùng mình, commit nhỏ | Kiểm tra danh sách file trước khi Commit |
+| Cuối phiên | Đẩy nhánh lên GitHub (kể cả việc dở) | Push origin |
+| Xong một phần | Mở Pull Request vào `dev` | Branch → Create Pull Request (base: `dev`) |
+| Cuối ngày | Báo tiến độ: Xong · Đang làm · Vướng · Cần ai | — |
+
+Nếu dùng AI agent: mở từ thư mục của mình (`cd frontend && claude` / `codex`) và đảm bảo đang ở đúng nhánh.
