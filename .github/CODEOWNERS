@@ -1,0 +1,14 @@
+# Thay <github-A>, <github-B>, <github-C> bằng username GitHub thật của 3 thành viên.
+# GitHub sẽ tự yêu cầu người sở hữu duyệt PR chạm vào vùng của họ.
+
+*                           <github-A> <github-B> <github-C>
+
+/contracts/                 <github-A>
+/shared/contract/           <github-A> <github-B>
+/shared/CONTRACT_INTERFACE.md <github-A> <github-B>
+
+/backend/                   <github-B>
+/shared/API_SPEC.md         <github-B> <github-C>
+/shared/mock/               <github-B> <github-C>
+
+/frontend/                  <github-C>

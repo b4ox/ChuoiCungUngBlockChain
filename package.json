@@ -1,0 +1,16 @@
+{
+  "name": "chuoi-cung-ung-blockchain",
+  "version": "1.0.0",
+  "private": true,
+  "description": "DApp truy xuat nguon goc san pham - demo local (Remix + Ganache + Express + HTML)",
+  "scripts": {
+    "chain": "ganache -d -p 7545 --chain.chainId 1337 --wallet.totalAccounts 10 --wallet.defaultBalance 100",
+    "remixd": "remixd -s ./contracts -u https://remix.ethereum.org",
+    "backend": "npm --prefix backend run dev",
+    "seed": "npm --prefix backend run seed"
+  },
+  "devDependencies": {
+    "@remix-project/remixd": "^0.6.0",
+    "ganache": "^7.9.2"
+  }
+}

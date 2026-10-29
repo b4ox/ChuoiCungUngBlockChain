@@ -1,0 +1,82 @@
+[
+  {
+    "index": 0,
+    "address": "0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1",
+    "name": "Admin",
+    "role": 0,
+    "roleText": "Chưa đăng ký",
+    "isAdmin": true
+  },
+  {
+    "index": 1,
+    "address": "0xFFcf8FDEE72ac11b5c542428B35EEF5769C409f0",
+    "name": "Công ty Trà Thái Nguyên",
+    "role": 1,
+    "roleText": "Nhà sản xuất",
+    "isAdmin": false
+  },
+  {
+    "index": 2,
+    "address": "0x22d491Bde2303f2f43325b2108D26f1eAbA1e32b",
+    "name": "Giao Hàng Nhanh",
+    "role": 2,
+    "roleText": "Vận chuyển",
+    "isAdmin": false
+  },
+  {
+    "index": 3,
+    "address": "0xE11BA2b4D45Eaed5996Cd0823791E0C93114882d",
+    "name": "NPP Miền Bắc",
+    "role": 3,
+    "roleText": "Nhà phân phối",
+    "isAdmin": false
+  },
+  {
+    "index": 4,
+    "address": "0xd03ea8624C8C5987235048901fB614fDcA89b117",
+    "name": "Siêu thị ABC",
+    "role": 4,
+    "roleText": "Nhà bán lẻ",
+    "isAdmin": false
+  },
+  {
+    "index": 5,
+    "address": "0x95cED938F7991cd0dFcb48F0a06a40FA1aF46EBC",
+    "name": "",
+    "role": 0,
+    "roleText": "Chưa đăng ký",
+    "isAdmin": false
+  },
+  {
+    "index": 6,
+    "address": "0x3E5e9111Ae8eB78Fe1CC3bb8915d5D461F3Ef9A9",
+    "name": "",
+    "role": 0,
+    "roleText": "Chưa đăng ký",
+    "isAdmin": false
+  },
+  {
+    "index": 7,
+    "address": "0x28a8746e75304c0780E011BEd21C72cD78cd535E",
+    "name": "",
+    "role": 0,
+    "roleText": "Chưa đăng ký",
+    "isAdmin": false
+  },
+  {
+    "index": 8,
+    "address": "0xACa94ef8bD5ffEE41947b4585a84BdA5a3d3DA6E",
+    "name": "",
+    "role": 0,
+    "roleText": "Chưa đăng ký",
+    "isAdmin": false
+  },
+  {
+    "index": 9,
+    "address": "0x1dF62f291b2E969fB0849d99D9Ce41e2F137006e",
+    "name": "",
+    "role": 0,
+    "roleText": "Chưa đăng ký",
+    "isAdmin": false
+  }
+]

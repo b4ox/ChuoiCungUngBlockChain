@@ -1,0 +1,4 @@
+# Giữ xuống dòng LF trên mọi máy (Windows/Mac) để tránh diff/xung đột giả
+* text=auto eol=lf
+*.png binary
+*.jpg binary

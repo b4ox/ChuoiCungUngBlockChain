@@ -1,0 +1,65 @@
+{
+  "product": {
+    "id": 1,
+    "name": "Trà xanh Thái Nguyên – Lô 01",
+    "origin": "Tân Cương, Thái Nguyên",
+    "description": "Trà búp khô 500g, thu hoạch 10/2026",
+    "manufacturer": "0xFFcf8FDEE72ac11b5c542428B35EEF5769C409f0",
+    "manufacturerName": "Công ty Trà Thái Nguyên",
+    "currentOwner": "0xd03ea8624C8C5987235048901fB614fDcA89b117",
+    "currentOwnerName": "Siêu thị ABC",
+    "status": 5,
+    "statusText": "Đã bán",
+    "createdAt": "2026-10-20T01:00:00.000Z"
+  },
+  "history": [
+    {
+      "status": 0,
+      "statusText": "Đã sản xuất",
+      "actor": "0xFFcf8FDEE72ac11b5c542428B35EEF5769C409f0",
+      "actorName": "Công ty Trà Thái Nguyên",
+      "time": "2026-10-20T01:00:00.000Z",
+      "note": "San pham duoc tao"
+    },
+    {
+      "status": 1,
+      "statusText": "Đang tới nhà phân phối",
+      "actor": "0x22d491Bde2303f2f43325b2108D26f1eAbA1e32b",
+      "actorName": "Giao Hàng Nhanh",
+      "time": "2026-10-21T02:00:00.000Z",
+      "note": "Nhận tại xưởng Thái Nguyên"
+    },
+    {
+      "status": 2,
+      "statusText": "Ở nhà phân phối",
+      "actor": "0xE11BA2b4D45Eaed5996Cd0823791E0C93114882d",
+      "actorName": "NPP Miền Bắc",
+      "time": "2026-10-22T06:30:00.000Z",
+      "note": "Nhập kho Hà Nội, nhiệt độ 22°C"
+    },
+    {
+      "status": 3,
+      "statusText": "Đang tới cửa hàng",
+      "actor": "0x22d491Bde2303f2f43325b2108D26f1eAbA1e32b",
+      "actorName": "Giao Hàng Nhanh",
+      "time": "2026-10-24T01:45:00.000Z",
+      "note": "Xe 29C-123.45 xuất kho"
+    },
+    {
+      "status": 4,
+      "statusText": "Ở cửa hàng",
+      "actor": "0xd03ea8624C8C5987235048901fB614fDcA89b117",
+      "actorName": "Siêu thị ABC",
+      "time": "2026-10-24T09:10:00.000Z",
+      "note": "Lên kệ siêu thị ABC Cầu Giấy"
+    },
+    {
+      "status": 5,
+      "statusText": "Đã bán",
+      "actor": "0xd03ea8624C8C5987235048901fB614fDcA89b117",
+      "actorName": "Siêu thị ABC",
+      "time": "2026-10-26T11:20:00.000Z",
+      "note": "Bán cho khách hàng"
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+[
+  {
+    "id": 1,
+    "name": "Trà xanh Thái Nguyên – Lô 01",
+    "origin": "Tân Cương, Thái Nguyên",
+    "description": "Trà búp khô 500g, thu hoạch 10/2026",
+    "manufacturer": "0xFFcf8FDEE72ac11b5c542428B35EEF5769C409f0",
+    "manufacturerName": "Công ty Trà Thái Nguyên",
+    "currentOwner": "0xd03ea8624C8C5987235048901fB614fDcA89b117",
+    "currentOwnerName": "Siêu thị ABC",
+    "status": 5,
+    "statusText": "Đã bán",
+    "createdAt": "2026-10-20T01:00:00.000Z"
+  },
+  {
+    "id": 2,
+    "name": "Cà phê Robusta – Lô 07",
+    "origin": "Buôn Ma Thuột, Đắk Lắk",
+    "description": "Cà phê nhân rang mộc 1kg",
+    "manufacturer": "0xFFcf8FDEE72ac11b5c542428B35EEF5769C409f0",
+    "manufacturerName": "Công ty Trà Thái Nguyên",
+    "currentOwner": "0xE11BA2b4D45Eaed5996Cd0823791E0C93114882d",
+    "currentOwnerName": "NPP Miền Bắc",
+    "status": 2,
+    "statusText": "Ở nhà phân phối",
+    "createdAt": "2026-10-22T02:30:00.000Z"
+  },
+  {
+    "id": 3,
+    "name": "Gạo ST25 – Lô 15",
+    "origin": "Sóc Trăng",
+    "description": "Gạo đóng túi 5kg",
+    "manufacturer": "0xFFcf8FDEE72ac11b5c542428B35EEF5769C409f0",
+    "manufacturerName": "Công ty Trà Thái Nguyên",
+    "currentOwner": "0xFFcf8FDEE72ac11b5c542428B35EEF5769C409f0",
+    "currentOwnerName": "Công ty Trà Thái Nguyên",
+    "status": 0,
+    "statusText": "Đã sản xuất",
+    "createdAt": "2026-10-25T03:15:00.000Z"
+  }
+]
