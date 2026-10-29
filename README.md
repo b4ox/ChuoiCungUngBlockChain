@@ -7,11 +7,13 @@ Chạy hoàn toàn trên máy local: Remix IDE + Ganache + Express + HTML/Bootst
 
 | Vùng | Thư mục | Người phụ trách | Tài liệu |
 | --- | --- | --- | --- |
-| Smart contract | `contracts/`, `shared/contract/`, `shared/CONTRACT_INTERFACE.md` | A – `nhungtrieu2005uh-bot` | Lộ trình Smart Contract |
-| Backend | `backend/`, `shared/API_SPEC.md`, `shared/mock/` | B – `b4ox` (kiêm điều phối) | Lộ trình Backend |
-| Frontend | `frontend/` | C – `vothinhungoc7980-coder` | Lộ trình Frontend |
+| Smart contract | `contracts/`, `shared/contract/`, `shared/CONTRACT_INTERFACE.md` | A – `nhungtrieu2005uh-bot` | [docs/LO_TRINH_CONTRACT.md](docs/LO_TRINH_CONTRACT.md) |
+| Backend | `backend/`, `shared/API_SPEC.md`, `shared/mock/` | B – `b4ox` (kiêm điều phối) | [docs/LO_TRINH_BACKEND.md](docs/LO_TRINH_BACKEND.md) |
+| Frontend | `frontend/` | C – `vothinhungoc7980-coder` | [docs/LO_TRINH_FRONTEND.md](docs/LO_TRINH_FRONTEND.md) |
 
-Thông tin chung (file ở thư mục gốc, `.github/`, mọi `AGENTS.md`/`CLAUDE.md`) chỉ điều phối viên `b4ox` được sửa.
+Thông tin chung (file ở thư mục gốc, `.github/`, `docs/`, mọi `AGENTS.md`/`CLAUDE.md`) chỉ điều phối viên `b4ox` được sửa.
+
+Tài liệu: thư mục [`docs/`](docs/README.md) — kế hoạch tổng và lộ trình của từng vùng.
 
 Quy tắc làm việc (cho người và AI agent): xem `AGENTS.md`. Claude Code đọc `CLAUDE.md`, ChatGPT Codex đọc `AGENTS.md`.
 

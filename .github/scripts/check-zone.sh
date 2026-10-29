@@ -35,9 +35,9 @@ case "$AUTHOR" in
 esac
 
 # ----- 3. File chung chỉ điều phối viên được sửa (kể cả nằm trong vùng con) -----
-#   - mọi file ở thư mục gốc, thư mục .github/, shared/README.md
+#   - mọi file ở thư mục gốc, thư mục .github/ và docs/, shared/README.md
 #   - AGENTS.md / CLAUDE.md ở bất kỳ đâu
-COMMON='^[^/]+$|^\.github/|^shared/README\.md$|(^|/)(AGENTS|CLAUDE)\.md$'
+COMMON='^[^/]+$|^\.github/|^docs/|^shared/README\.md$|(^|/)(AGENTS|CLAUDE)\.md$'
 
 COMMON_HITS=$(grep -E  "$COMMON"  "$CHANGED_FILES" || true)
 OUTSIDE=$(grep -Ev "$ALLOWED" "$CHANGED_FILES" || true)

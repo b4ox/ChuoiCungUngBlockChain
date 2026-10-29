@@ -1,6 +1,7 @@
 # AGENTS.md — Vùng BACKEND (chủ sở hữu: thành viên B – `b4ox`)
 
 Quy tắc chung ở `../AGENTS.md` vẫn áp dụng. File này bổ sung cho vùng Backend.
+Lộ trình, checklist và ca kiểm thử: `../docs/LO_TRINH_BACKEND.md`. Code mẫu: `../docs/KE_HOACH_TONG.md`, mục 5.
 
 ## Được sửa
 (Trừ `AGENTS.md` và `CLAUDE.md` trong thư mục này — đó là thông tin chung, chỉ điều phối viên `b4ox` sửa.)
@@ -40,4 +41,4 @@ Route chỉ: đọc request → gọi service → trả JSON. Không gọi contr
 ## Kiểm tra
 - `npm run dev` khởi động không lỗi; `GET /api/health` trả `ok: true` khi Ganache chạy.
 - Response thật khớp cấu trúc mock tương ứng.
-- Bảng ca kiểm thử trong tài liệu "Lộ trình Backend", mục 6.
+- Bảng ca kiểm thử trong `docs/LO_TRINH_BACKEND.md`, mục 6.

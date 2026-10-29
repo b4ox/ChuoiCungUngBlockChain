@@ -6,6 +6,8 @@
 
 ## 1. Dự án
 
+Tài liệu: `docs/KE_HOACH_TONG.md` (kế hoạch tổng, code mẫu) và `docs/LO_TRINH_<VÙNG>.md` (lộ trình, checklist, ca kiểm thử của từng vùng). Đọc lộ trình của vùng mình trước khi bắt đầu một nhiệm vụ.
+
 DApp truy xuất nguồn gốc sản phẩm trong chuỗi cung ứng, chạy hoàn toàn trên máy local để demo.
 
 | Lớp | Công nghệ | Thư mục |
@@ -36,7 +38,7 @@ Dự án chia cho 3 người. Agent đang làm việc cho người sở hữu th
 | `shared/contract/**`, `shared/CONTRACT_INTERFACE.md` | A | Sửa | Chỉ đọc | Chỉ đọc |
 | `backend/**`, `shared/API_SPEC.md`, `shared/mock/**` | B | Chỉ đọc | Sửa | Chỉ đọc |
 | `frontend/**` | C | Chỉ đọc | Chỉ đọc | Sửa |
-| **Thông tin chung:** mọi file ở thư mục gốc (`AGENTS.md`, `CLAUDE.md`, `README.md`, `package.json`, `.gitignore`...), `.github/**`, `shared/README.md`, và `AGENTS.md`/`CLAUDE.md` ở MỌI thư mục | Điều phối viên `b4ox` | Không sửa | Chỉ sửa khi b4ox yêu cầu rõ | Không sửa |
+| **Thông tin chung:** mọi file ở thư mục gốc (`AGENTS.md`, `CLAUDE.md`, `README.md`, `package.json`, `.gitignore`...), `.github/**`, `docs/**`, `shared/README.md`, và `AGENTS.md`/`CLAUDE.md` ở MỌI thư mục | Điều phối viên `b4ox` | Không sửa | Chỉ sửa khi b4ox yêu cầu rõ | Không sửa |
 
 Quy tắc bắt buộc:
 
