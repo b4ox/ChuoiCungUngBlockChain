@@ -1,8 +1,9 @@
-# AGENTS.md — Vùng BACKEND (chủ sở hữu: thành viên B)
+# AGENTS.md — Vùng BACKEND (chủ sở hữu: thành viên B – `b4ox`)
 
 Quy tắc chung ở `../AGENTS.md` vẫn áp dụng. File này bổ sung cho vùng Backend.
 
 ## Được sửa
+(Trừ `AGENTS.md` và `CLAUDE.md` trong thư mục này — đó là thông tin chung, chỉ điều phối viên `b4ox` sửa.)
 - `backend/**`
 - `shared/API_SPEC.md`, `shared/mock/**`
 

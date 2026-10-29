@@ -7,9 +7,11 @@ Chạy hoàn toàn trên máy local: Remix IDE + Ganache + Express + HTML/Bootst
 
 | Vùng | Thư mục | Người phụ trách | Tài liệu |
 | --- | --- | --- | --- |
-| Smart contract | `contracts/`, `shared/contract/`, `shared/CONTRACT_INTERFACE.md` | A | Lộ trình Smart Contract |
-| Backend | `backend/`, `shared/API_SPEC.md`, `shared/mock/` | B | Lộ trình Backend |
-| Frontend | `frontend/` | C | Lộ trình Frontend |
+| Smart contract | `contracts/`, `shared/contract/`, `shared/CONTRACT_INTERFACE.md` | A – `nhungtrieu2005uh-bot` | Lộ trình Smart Contract |
+| Backend | `backend/`, `shared/API_SPEC.md`, `shared/mock/` | B – `b4ox` (kiêm điều phối) | Lộ trình Backend |
+| Frontend | `frontend/` | C – `vothinhungoc7980-coder` | Lộ trình Frontend |
+
+Thông tin chung (file ở thư mục gốc, `.github/`, mọi `AGENTS.md`/`CLAUDE.md`) chỉ điều phối viên `b4ox` được sửa.
 
 Quy tắc làm việc (cho người và AI agent): xem `AGENTS.md`. Claude Code đọc `CLAUDE.md`, ChatGPT Codex đọc `AGENTS.md`.
 
@@ -34,4 +36,5 @@ cp backend/.env.example backend/.env
 
 ## Git
 
-`main` ← `dev` ← `contract/*`, `backend/*`, `frontend/*`. Mọi thay đổi qua Pull Request vào `dev`.
+`master` ← `dev` ← `contract/*`, `backend/*`, `frontend/*`. Mọi thay đổi qua Pull Request vào `dev`; chỉ `b4ox` merge.
+PR có file ngoài vùng của người mở sẽ bị workflow **Zone guard** đánh dấu đỏ.

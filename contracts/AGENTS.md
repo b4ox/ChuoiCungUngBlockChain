@@ -1,8 +1,9 @@
-# AGENTS.md — Vùng CONTRACT (chủ sở hữu: thành viên A)
+# AGENTS.md — Vùng CONTRACT (chủ sở hữu: thành viên A – `nhungtrieu2005uh-bot`)
 
 Quy tắc chung ở `../AGENTS.md` vẫn áp dụng. File này bổ sung cho vùng Contract.
 
 ## Được sửa
+(Trừ `AGENTS.md` và `CLAUDE.md` trong thư mục này — đó là thông tin chung, chỉ điều phối viên `b4ox` sửa.)
 - `contracts/**`
 - `shared/contract/SupplyChain.abi.json`, `shared/contract/deployment.json`
 - `shared/CONTRACT_INTERFACE.md`

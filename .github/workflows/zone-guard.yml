@@ -1,0 +1,38 @@
+# =============================================================
+# ZONE GUARD — chạy tự động khi có Pull Request vào master/dev
+# Dùng pull_request_target + checkout nhánh ĐÍCH (không phải code của PR)
+# để người mở PR không thể sửa script kiểm tra cho "qua mặt".
+# Danh sách file thay đổi lấy từ GitHub API, không chạy code của PR.
+# =============================================================
+name: Zone guard
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+    branches: [master, dev]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  zone-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Lấy script kiểm tra từ nhánh đích (code tin cậy)
+        uses: actions/checkout@v4
+
+      - name: Lấy danh sách file thay đổi trong PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          gh api "repos/$REPO/pulls/$PR/files" --paginate \
+            --jq '.[] | .filename, (.previous_filename // empty)' > changed.txt
+          echo "File thay đổi:"; cat changed.txt
+
+      - name: Kiểm tra vùng được phép
+        env:
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: bash .github/scripts/check-zone.sh "$AUTHOR" changed.txt

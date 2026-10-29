@@ -1,8 +1,9 @@
-# AGENTS.md — Vùng FRONTEND (chủ sở hữu: thành viên C)
+# AGENTS.md — Vùng FRONTEND (chủ sở hữu: thành viên C – `vothinhungoc7980-coder`)
 
 Quy tắc chung ở `../AGENTS.md` vẫn áp dụng. File này bổ sung cho vùng Frontend.
 
 ## Được sửa
+(Trừ `AGENTS.md` và `CLAUDE.md` trong thư mục này — đó là thông tin chung, chỉ điều phối viên `b4ox` sửa.)
 - `frontend/**` — và chỉ thế thôi.
 
 Chỉ đọc: `shared/API_SPEC.md`, `shared/mock/**`, `shared/CONTRACT_INTERFACE.md`. Không đụng `backend/`, `contracts/`.

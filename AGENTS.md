@@ -24,23 +24,33 @@ Frontend KHÔNG gọi blockchain trực tiếp.
 Dự án chia cho 3 người. Agent đang làm việc cho người sở hữu thư mục mà agent được mở trong đó
 (xác định bằng thư mục làm việc hiện tại: `contracts/`, `backend/` hoặc `frontend/`).
 
-| Đường dẫn | Chủ sở hữu | Agent của Contract | Agent của Backend | Agent của Frontend |
+| Thành viên | GitHub | Vai trò |
+| --- | --- | --- |
+| A | `nhungtrieu2005uh-bot` | Contract |
+| B | `b4ox` | Backend **+ Điều phối viên** (người duy nhất sửa thông tin chung) |
+| C | `vothinhungoc7980-coder` | Frontend |
+
+| Đường dẫn | Chủ sở hữu | Agent của Contract | Agent của Backend (b4ox) | Agent của Frontend |
 | --- | --- | --- | --- | --- |
-| `contracts/**` | A – Contract | Sửa | Chỉ đọc | Chỉ đọc |
-| `shared/contract/**`, `shared/CONTRACT_INTERFACE.md` | A – Contract | Sửa | Chỉ đọc | Chỉ đọc |
-| `backend/**` | B – Backend | Chỉ đọc | Sửa | Chỉ đọc |
-| `shared/API_SPEC.md`, `shared/mock/**` | B – Backend | Chỉ đọc | Sửa | Chỉ đọc |
-| `frontend/**` | C – Frontend | Chỉ đọc | Chỉ đọc | Sửa |
-| File gốc (`AGENTS.md`, `CLAUDE.md`, `README.md`, `package.json`, `.gitignore`, `.github/**`, `shared/README.md`) | Cả nhóm | Không sửa | Không sửa | Không sửa |
+| `contracts/**` | A | Sửa | Chỉ đọc | Chỉ đọc |
+| `shared/contract/**`, `shared/CONTRACT_INTERFACE.md` | A | Sửa | Chỉ đọc | Chỉ đọc |
+| `backend/**`, `shared/API_SPEC.md`, `shared/mock/**` | B | Chỉ đọc | Sửa | Chỉ đọc |
+| `frontend/**` | C | Chỉ đọc | Chỉ đọc | Sửa |
+| **Thông tin chung:** mọi file ở thư mục gốc (`AGENTS.md`, `CLAUDE.md`, `README.md`, `package.json`, `.gitignore`...), `.github/**`, `shared/README.md`, và `AGENTS.md`/`CLAUDE.md` ở MỌI thư mục | Điều phối viên `b4ox` | Không sửa | Chỉ sửa khi b4ox yêu cầu rõ | Không sửa |
 
 Quy tắc bắt buộc:
 
 1. **Chỉ tạo/sửa/xoá file trong vùng "Sửa" của mình.** Không ngoại lệ, kể cả sửa lỗi chính tả.
-2. Nếu agent được mở ở thư mục gốc (không rõ vùng), **hỏi người dùng đang làm phần nào** trước khi sửa bất kỳ file nào.
-3. Nếu nhiệm vụ cần thay đổi ngoài vùng (ví dụ cần thêm trường vào API, đổi hàm contract):
+2. **Thông tin chung chỉ điều phối viên `b4ox` được sửa.** Agent của Backend chỉ sửa các file này khi người dùng
+   (b4ox) yêu cầu rõ ràng là việc điều phối; nếu không, coi như chỉ đọc. Agent của Contract/Frontend không bao giờ sửa.
+3. Nếu agent được mở ở thư mục gốc (không rõ vùng), **hỏi người dùng đang làm phần nào** trước khi sửa bất kỳ file nào.
+4. Nếu nhiệm vụ cần thay đổi ngoài vùng (ví dụ cần thêm trường vào API, đổi hàm contract, sửa rule):
    **DỪNG LẠI**, không sửa, và trả lời người dùng bằng một "Đề xuất thay đổi" gồm: file cần đổi, chủ sở hữu, nội dung đề xuất, lý do.
-4. Không bao giờ "sửa tạm" code của người khác cho chạy được. Thay vào đó dùng mock / dữ liệu giả trong vùng của mình.
-5. Trước khi kết thúc, liệt kê mọi file đã thay đổi và xác nhận tất cả nằm trong vùng "Sửa".
+5. Không bao giờ "sửa tạm" code của người khác cho chạy được. Thay vào đó dùng mock / dữ liệu giả trong vùng của mình.
+6. Trước khi kết thúc, liệt kê mọi file đã thay đổi và xác nhận tất cả nằm trong vùng "Sửa".
+
+Ranh giới này được GitHub kiểm tra tự động: workflow `.github/workflows/zone-guard.yml` đánh dấu đỏ mọi Pull Request
+có file ngoài vùng của người mở PR, và `.github/CODEOWNERS` buộc `b4ox` duyệt mọi PR.
 
 ## 3. Giao diện chung đã chốt (interface v1)
 
@@ -73,9 +83,10 @@ Luật thay đổi:
 
 ## 5. Git
 
-- Nhánh: `main` (bản demo ổn định) ← `dev` (tích hợp) ← nhánh việc `contract/<việc>`, `backend/<việc>`, `frontend/<việc>`.
+- Nhánh: `master` (bản demo ổn định) ← `dev` (tích hợp) ← nhánh việc `contract/<việc>`, `backend/<việc>`, `frontend/<việc>`.
+- Mọi thay đổi vào `dev`/`master` đi qua Pull Request; chỉ `b4ox` merge.
 - Commit theo mẫu Conventional Commits có scope: `feat(backend): them route products`, `fix(frontend): ...`, `docs(contract): ...`.
-- Agent KHÔNG tự `git push`, KHÔNG commit lên `dev`/`main`, KHÔNG `git push --force`, KHÔNG sửa lịch sử. Chỉ commit khi người dùng yêu cầu.
+- Agent KHÔNG tự `git push`, KHÔNG commit lên `dev`/`master`, KHÔNG `git push --force`, KHÔNG sửa lịch sử. Chỉ commit khi người dùng yêu cầu.
 - Trước khi commit: `git status` chỉ được chứa file trong vùng của mình.
 
 ## 6. Môi trường chạy

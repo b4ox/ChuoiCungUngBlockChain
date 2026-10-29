@@ -1,14 +1,28 @@
-# Thay <github-A>, <github-B>, <github-C> bằng username GitHub thật của 3 thành viên.
-# GitHub sẽ tự yêu cầu người sở hữu duyệt PR chạm vào vùng của họ.
+# =============================================================
+# CODEOWNERS — ai phải duyệt PR chạm vào từng vùng
+# Quy tắc GitHub: dòng KHỚP CUỐI CÙNG thắng, nên các dòng "chốt" đặt ở cuối.
+# Điều phối viên b4ox có mặt ở mọi vùng => mọi PR đều cần b4ox duyệt
+# (thành viên không tự duyệt được PR của chính mình).
+# =============================================================
 
-*                           <github-A> <github-B> <github-C>
+# Mặc định: mọi file chung của dự án chỉ điều phối viên duyệt
+*                               @b4ox
 
-/contracts/                 <github-A>
-/shared/contract/           <github-A> <github-B>
-/shared/CONTRACT_INTERFACE.md <github-A> <github-B>
+# Vùng Contract
+/contracts/                     @nhungtrieu2005uh-bot @b4ox
+/shared/contract/               @nhungtrieu2005uh-bot @b4ox
+/shared/CONTRACT_INTERFACE.md   @nhungtrieu2005uh-bot @b4ox
 
-/backend/                   <github-B>
-/shared/API_SPEC.md         <github-B> <github-C>
-/shared/mock/               <github-B> <github-C>
+# Vùng Backend (b4ox) — API spec + mock cần Frontend xem cùng
+/backend/                       @b4ox
+/shared/API_SPEC.md             @b4ox @vothinhungoc7980-coder
+/shared/mock/                   @b4ox @vothinhungoc7980-coder
 
-/frontend/                  <github-C>
+# Vùng Frontend
+/frontend/                      @vothinhungoc7980-coder @b4ox
+
+# CHỐT: file quy tắc & cấu hình chung — chỉ b4ox, kể cả khi nằm trong vùng con
+**/AGENTS.md                    @b4ox
+**/CLAUDE.md                    @b4ox
+/shared/README.md               @b4ox
+/.github/                       @b4ox
