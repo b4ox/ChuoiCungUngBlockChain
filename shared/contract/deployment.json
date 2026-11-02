@@ -5,5 +5,5 @@
   "rpcUrl": "http://127.0.0.1:7545",
   "address": "0xe78A0F7E598Cc8b0Bb87894B0F60dD2a88d6a8Ab",
   "deployer": "0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1",
-  "note": "Dia chi du kien khi Ganache -d vua khoi dong va Account 0 deploy o giao dich dau tien. Contract (A) xac nhan tai M2."
+  "note": "Da doi chieu truc tiep tren Ganache ngay 2026-10-30: chainId, owner, runtime bytecode va ABI khop artifact Remix; Solidity 0.8.20, EVM paris."
 }
