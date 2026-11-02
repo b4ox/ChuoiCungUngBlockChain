@@ -47,3 +47,5 @@ Không cần Ganache.
 | `Chưa có contract tại 0x…` | Ganache vừa khởi động lại → deploy lại bằng Remix |
 | `Contract đã có sản phẩm` (khi seed) | Seed chỉ chạy một lần; muốn làm lại thì khởi động lại Ganache + deploy lại |
 | Điện thoại quét QR không mở được | Đặt `PUBLIC_URL=http://<IP máy>:3000` trong `.env`, điện thoại cùng Wi-Fi |
+
+d
