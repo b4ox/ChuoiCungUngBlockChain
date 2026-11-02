@@ -1,0 +1,105 @@
+### =============================================================
+### REQUEST MẪU — mở bằng extension REST Client hoặc Thunder Client (VS Code)
+### Chuẩn bị: npm run chain -> deploy contract (Account 0) -> cd backend && npm run seed && npm run dev
+### Địa chỉ dưới đây là tài khoản cố định của Ganache -d (giống mọi máy)
+### =============================================================
+@api = http://localhost:3000/api
+@admin = 0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1
+@manufacturer = 0xFFcf8FDEE72ac11b5c542428B35EEF5769C409f0
+@transporter = 0x22d491Bde2303f2f43325b2108D26f1eAbA1e32b
+@distributor = 0xE11BA2b4D45Eaed5996Cd0823791E0C93114882d
+@retailer = 0xd03ea8624C8C5987235048901fB614fDcA89b117
+@account5 = 0x95cED938F7991cd0dFcb48F0a06a40FA1aF46EBC
+
+### 1. Kiểm tra kết nối (Ganache tắt -> 500)
+GET {{api}}/health
+
+### 2. 10 tài khoản Ganache
+GET {{api}}/accounts
+
+### 3. Thành viên đã đăng ký
+GET {{api}}/participants
+
+### 4. Admin đăng ký thành viên mới (role: 1 NSX, 2 Vận chuyển, 3 NPP, 4 Bán lẻ)
+POST {{api}}/participants
+Content-Type: application/json
+
+{ "from": "{{admin}}", "account": "{{account5}}", "name": "Vận tải Sài Gòn", "role": 2 }
+
+### 5. Danh sách sản phẩm (bỏ ?status để lấy tất cả)
+GET {{api}}/products?status=0
+
+### 6. Chi tiết + lịch sử sản phẩm 1
+GET {{api}}/products/1
+
+### 7. Nhà sản xuất tạo sản phẩm (trả thêm productId)
+POST {{api}}/products
+Content-Type: application/json
+
+{ "from": "{{manufacturer}}", "name": "Mật ong rừng U Minh", "origin": "Cà Mau", "description": "Chai 500ml" }
+
+### =============================================================
+### LUỒNG 6 BƯỚC cho sản phẩm vừa tạo — sửa @id cho đúng productId ở bước 7
+### =============================================================
+@id = 4
+
+### 8a. Vận chuyển nhận hàng tại xưởng (0 -> 1)
+POST {{api}}/products/{{id}}/pickup
+Content-Type: application/json
+
+{ "from": "{{transporter}}", "note": "Nhận tại xưởng" }
+
+### 9a. Nhà phân phối nhận hàng (1 -> 2)
+POST {{api}}/products/{{id}}/receive
+Content-Type: application/json
+
+{ "from": "{{distributor}}", "note": "Nhập kho" }
+
+### 8b. Vận chuyển chở tới cửa hàng (2 -> 3)
+POST {{api}}/products/{{id}}/pickup
+Content-Type: application/json
+
+{ "from": "{{transporter}}", "note": "Xuất kho tới cửa hàng" }
+
+### 9b. Nhà bán lẻ nhận hàng (3 -> 4)
+POST {{api}}/products/{{id}}/receive
+Content-Type: application/json
+
+{ "from": "{{retailer}}", "note": "Lên kệ" }
+
+### 10. Nhà bán lẻ bán (4 -> 5) — sau đó GET /products/{{id}} có history 6 phần tử
+POST {{api}}/products/{{id}}/sell
+Content-Type: application/json
+
+{ "from": "{{retailer}}", "note": "Bán cho khách" }
+
+### 11. Ảnh QR trỏ tới trace.html?id=1
+GET {{api}}/products/1/qrcode
+
+### 12. Hoạt động gần đây
+GET {{api}}/events?limit=5
+
+### =============================================================
+### CÁC CA LỖI (mong đợi HTTP 400 + câu lỗi nguyên văn của contract)
+### =============================================================
+
+### Vận chuyển tạo sản phẩm -> "Sai vai tro"
+POST {{api}}/products
+Content-Type: application/json
+
+{ "from": "{{transporter}}", "name": "x", "origin": "y" }
+
+### Không phải admin đăng ký -> "Chi admin duoc phep"
+POST {{api}}/participants
+Content-Type: application/json
+
+{ "from": "{{manufacturer}}", "account": "{{account5}}", "name": "x", "role": 2 }
+
+### Bán khi chưa tới cửa hàng -> "San pham chua den cua hang"
+POST {{api}}/products/3/sell
+Content-Type: application/json
+
+{ "from": "{{retailer}}", "note": "" }
+
+### Sản phẩm không tồn tại -> "San pham khong ton tai"
+GET {{api}}/products/999
