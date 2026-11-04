@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sản phẩm | TraceChain</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"><link href="css/style.css" rel="stylesheet">
+</head>
+<body data-design="contrast">
+<div class="app-shell">
+  <aside class="sidebar" aria-label="Điều hướng chính">
+    <a class="brand" href="index.html"><span class="brand-icon"><i class="bi bi-box-seam"></i></span><span>Trace<span>Chain</span><small>SUPPLY CHAIN PLATFORM</small></span></a>
+    <div class="nav-label">KHÔNG GIAN LÀM VIỆC</div>
+    <nav class="side-nav"><a class="nav-item" href="index.html"><i class="bi bi-grid-1x2"></i> Tổng quan</a><a class="nav-item active" href="products.html" aria-current="page"><i class="bi bi-box2"></i> Sản phẩm</a><span class="nav-item unavailable"><i class="bi bi-arrow-left-right"></i> Xử lý đơn <small>Sắp có</small></span><span class="nav-item unavailable"><i class="bi bi-search"></i> Tra cứu <small>Sắp có</small></span><span class="nav-item unavailable"><i class="bi bi-people"></i> Thành viên <small>Sắp có</small></span></nav>
+    <div class="sidebar-note"><div class="note-icon"><i class="bi bi-shield-check"></i></div><strong>Minh bạch từ nguồn gốc</strong><p>Theo dõi hành trình sản phẩm qua từng giai đoạn.</p><span>ĐƯỢC XÂY DỰNG TRÊN BLOCKCHAIN</span></div><div class="sidebar-footer">© 2026 TraceChain <span>•</span> Supply chain</div>
+  </aside>
+  <main class="main-content">
+    <header class="topbar"><div><span class="breadcrumb-text">KHÔNG GIAN LÀM VIỆC</span><span class="breadcrumb-separator">/</span><strong>Sản phẩm</strong></div><div class="topbar-right"><span class="mode-pill"><span></span> <span id="dataMode">Dữ liệu mẫu</span></span><label class="role-picker"><span>Đang đóng vai</span><select id="accountSelect" aria-label="Chọn tài khoản đang đóng vai"><option>Đang tải...</option></select></label></div></header>
+    <div class="page-content">
+      <section class="welcome members-welcome"><div><div class="eyebrow"><span></span> QUẢN LÝ SẢN PHẨM</div><h1>Theo dõi sản phẩm<span>.</span></h1><p>Xem nguồn gốc, người đang sở hữu và trạng thái của từng sản phẩm.</p></div><button id="openProductDialog" class="primary-button member-add" type="button" hidden><i class="bi bi-plus-lg"></i> Thêm sản phẩm</button></section><p class="member-hint" id="roleHint"><i class="bi bi-info-circle"></i> Chọn vai <strong>Nhà sản xuất</strong> để thêm sản phẩm.</p>
+      <div>
+        <section class="product-list-card"><div class="product-list-heading"><div><h2>Danh sách sản phẩm</h2><p id="productCount">Đang tải danh sách...</p></div><label class="filter-label">Trạng thái <select id="statusFilter"><option value="">Tất cả trạng thái</option><option value="transit">Đang vận chuyển (cả hai chặng)</option><option value="0">Đã sản xuất</option><option value="1">Đang tới nhà phân phối</option><option value="2">Ở nhà phân phối</option><option value="3">Đang tới cửa hàng</option><option value="4">Ở cửa hàng</option><option value="5">Đã bán</option></select></label></div>
+          <div id="productState" class="product-state" role="status">Đang tải dữ liệu...</div><div class="table-wrap"><table><thead><tr><th>SẢN PHẨM</th><th>NGUỒN GỐC</th><th>NGƯỜI SỞ HỮU</th><th>TRẠNG THÁI</th></tr></thead><tbody id="productBody"></tbody></table></div></section>
+
+      </div><footer class="page-footer"><span>TraceChain · Kết nối hành trình, xây dựng niềm tin.</span><span>Chuỗi cung ứng minh bạch <i class="bi bi-arrow-up-right"></i></span></footer>
+    </div>
+  </main>
+</div>
+<dialog id="productDialog" aria-labelledby="productDialogTitle" aria-describedby="productDialogDescription">
+  <div class="member-dialog-heading"><span class="form-icon"><i class="bi bi-box-seam"></i></span><button id="closeProductDialog" type="button" class="member-close" aria-label="Đóng cửa sổ thêm sản phẩm"><i class="bi bi-x-lg"></i></button></div>
+  <h2 id="productDialogTitle">Thêm sản phẩm</h2><p id="productDialogDescription" class="member-dialog-description">Ghi nhận thông tin sản phẩm mới vào chuỗi cung ứng.</p>
+  <form id="productForm" class="member-form"><label for="productName">Tên sản phẩm <span>*</span></label><input id="productName" name="name" required maxlength="200" placeholder="Ví dụ: Trà xanh Thái Nguyên"><label for="productOrigin">Nguồn gốc <span>*</span></label><input id="productOrigin" name="origin" required maxlength="200" placeholder="Ví dụ: Tân Cương, Thái Nguyên"><label for="productDescription">Mô tả <span>*</span></label><textarea id="productDescription" name="description" rows="4" required maxlength="500" placeholder="Thông tin về sản phẩm, quy cách đóng gói..."></textarea><p id="mockNotice" class="mock-notice">Đang dùng dữ liệu mẫu: thao tác chỉ để thử, sản phẩm sẽ không được lưu.</p><p id="productFormError" class="member-form-error" role="alert" hidden></p><div class="member-dialog-actions"><button id="cancelProductDialog" class="member-cancel" type="button">Hủy</button><button class="primary-button" type="submit">Thêm sản phẩm</button></div></form>
+</dialog>
+<div id="toastContainer" class="toast-container" aria-live="polite"></div>
+<script src="js/config.js"></script><script src="js/api.js"></script><script src="js/common.js"></script><script src="js/products.js"></script>
+</body></html>

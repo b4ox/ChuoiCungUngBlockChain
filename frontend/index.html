@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tổng quan | TraceChain</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="css/style.css" rel="stylesheet">
+</head>
+<body data-design="contrast">
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Điều hướng chính">
+      <a class="brand" href="index.html"><span class="brand-icon"><i class="bi bi-box-seam"></i></span><span>Trace<span>Chain</span><small>SUPPLY CHAIN PLATFORM</small></span></a>
+      <div class="nav-label">KHÔNG GIAN LÀM VIỆC</div>
+      <nav class="side-nav">
+        <a class="nav-item active" href="index.html" aria-current="page"><i class="bi bi-grid-1x2"></i> Tổng quan</a>
+        <a class="nav-item" href="products.html"><i class="bi bi-box2"></i> Sản phẩm</a>
+        <span class="nav-item unavailable"><i class="bi bi-arrow-left-right"></i> Xử lý đơn <small>Sắp có</small></span>
+        <span class="nav-item unavailable"><i class="bi bi-search"></i> Tra cứu <small>Sắp có</small></span>
+        <span class="nav-item unavailable"><i class="bi bi-people"></i> Thành viên <small>Sắp có</small></span>
+      </nav>
+      <div class="sidebar-note"><div class="note-icon"><i class="bi bi-shield-check"></i></div><strong>Minh bạch từ nguồn gốc</strong><p>Theo dõi hành trình sản phẩm qua từng giai đoạn.</p><span>ĐƯỢC XÂY DỰNG TRÊN BLOCKCHAIN</span></div>
+      <div class="sidebar-footer">© 2026 TraceChain <span>•</span> Supply chain</div>
+    </aside>
+    <main class="main-content">
+      <header class="topbar"><div><span class="breadcrumb-text">KHÔNG GIAN LÀM VIỆC</span><span class="breadcrumb-separator">/</span><strong>Tổng quan</strong></div><div class="topbar-right"><span class="mode-pill"><span></span> Dữ liệu mẫu</span><label class="role-picker"><span>Đang đóng vai</span><select id="accountSelect" aria-label="Chọn tài khoản đang đóng vai"><option>Đang tải...</option></select></label></div></header>
+      <div class="page-content">
+        <section class="welcome"><div><div class="eyebrow"><span></span> TRUNG TÂM ĐIỀU HÀNH</div><h1>Tổng quan chuỗi cung ứng<span>.</span></h1><p>Theo dõi sản phẩm, hoạt động và hành trình của bạn tại một nơi.</p></div><div class="welcome-date"><i class="bi bi-calendar3"></i><span id="todayDate"></span></div></section>
+        <section class="hero"><div class="hero-content"><div class="hero-kicker"><i class="bi bi-stars"></i> MINH BẠCH TRONG TỪNG BƯỚC</div><h2>Mỗi sản phẩm đều có<br>một câu chuyện.</h2><p>Hành trình từ nơi sản xuất đến tay người dùng được ghi nhận và theo dõi xuyên suốt.</p><span class="hero-tag"><i class="bi bi-link-45deg"></i> Kết nối mọi mắt xích</span></div><div class="hero-art" aria-hidden="true"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="art-box"><i class="bi bi-box-seam"></i></div><span class="art-node node-one"><i class="bi bi-check2"></i></span><span class="art-node node-two"><i class="bi bi-truck"></i></span><span class="art-node node-three"><i class="bi bi-geo-alt"></i></span></div></section>
+        <div class="section-heading"><div><div class="eyebrow muted">BỨC TRANH TOÀN CẢNH</div><h2>Chỉ số nổi bật</h2></div><span class="section-hint">Tổng hợp từ dữ liệu hiện có</span></div>
+        <section class="stats-grid" aria-label="Thống kê"><a class="stat-card stat-link" href="products.html"><div class="stat-top"><span>Tổng sản phẩm</span><span class="stat-icon purple"><i class="bi bi-box-seam"></i></span></div><strong id="totalProducts">—</strong><p>Sản phẩm được ghi nhận</p><span class="stat-action">Xem sản phẩm <i class="bi bi-arrow-up-right"></i></span></a><a class="stat-card stat-link" href="products.html?status=transit"><div class="stat-top"><span>Đang vận chuyển</span><span class="stat-icon amber"><i class="bi bi-truck"></i></span></div><strong id="inTransit">—</strong><p>Trên đường đến điểm tiếp theo</p><span class="stat-action">Xem vận chuyển <i class="bi bi-arrow-up-right"></i></span></a><a class="stat-card stat-link" href="products.html?status=5"><div class="stat-top"><span>Đã bán</span><span class="stat-icon green"><i class="bi bi-check2-circle"></i></span></div><strong id="soldProducts">—</strong><p>Sản phẩm hoàn tất hành trình</p><span class="stat-action">Xem sản phẩm đã bán <i class="bi bi-arrow-up-right"></i></span></a><a class="stat-card stat-link" href="admin.html"><div class="stat-top"><span>Thành viên</span><span class="stat-icon blue"><i class="bi bi-people"></i></span></div><strong id="totalParticipants">—</strong><p>Đối tác trong chuỗi cung ứng</p><span class="stat-action">Xem thành viên <i class="bi bi-arrow-up-right"></i></span></a></section>
+        <section class="activity-card"><div class="activity-header"><div><div class="eyebrow muted">DÒNG THỜI GIAN</div><h2>Hoạt động gần đây</h2><p>Cập nhật mới nhất trong chuỗi cung ứng của bạn.</p></div><span class="activity-icon"><i class="bi bi-activity"></i></span></div><div id="activityState" class="activity-state" role="status">Đang tải hoạt động...</div><div class="table-wrap"><table><thead><tr><th>SẢN PHẨM</th><th>TRẠNG THÁI</th><th>NGƯỜI THỰC HIỆN</th><th>THỜI GIAN</th><th>BLOCK</th></tr></thead><tbody id="activityBody"></tbody></table></div><div class="activity-footer"><i class="bi bi-info-circle"></i> Các hoạt động được hiển thị theo thời gian mới nhất.</div></section>
+        <footer class="page-footer"><span>TraceChain · Kết nối hành trình, xây dựng niềm tin.</span><span>Chuỗi cung ứng minh bạch <i class="bi bi-arrow-up-right"></i></span></footer>
+      </div>
+    </main>
+  </div>
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+  <script src="js/config.js"></script><script src="js/api.js"></script><script src="js/common.js"></script><script src="js/dashboard.js"></script>
+</body>
+</html>
