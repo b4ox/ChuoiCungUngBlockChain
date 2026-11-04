@@ -1,97 +1,106 @@
 // =============================================================
-// THÀNH VIÊN: lọc dữ liệu đã tải, không thay đổi danh sách gốc.
+// THÀNH VIÊN: ai cũng xem được danh sách; chỉ quản trị viên được
+// cấp vai trò cho ví (gọi registerParticipant qua POST /participants).
 // =============================================================
 let members = [];
-let membersLoaded = false;
-let isRegistering = false;
-const adminDialog = document.getElementById('adminDialog');
 
-function filteredMembers() {
-  const search = document.getElementById('memberSearch').value.trim().toLocaleLowerCase('vi');
-  const role = document.getElementById('memberFilterRole').value;
-  const active = document.getElementById('memberFilterActive').value;
-  return members.filter(member => {
-    const matchesText = (member.name || '').toLocaleLowerCase('vi').includes(search) || (member.address || '').toLowerCase().includes(search);
-    const matchesRole = role === '' || member.role === Number(role);
-    const matchesActive = active === '' || member.isActive === (active === 'active');
-    return matchesText && matchesRole && matchesActive;
-  });
+function matchesMember(member) {
+  const search = document.getElementById('memberSearch').value.trim().toLowerCase();
+  const role = document.getElementById('roleFilter').value;
+  const active = document.getElementById('activeFilter').value;
+  const text = (member.name + ' ' + member.address).toLowerCase();
+  if (search && !text.includes(search)) return false;
+  if (role && member.role !== Number(role)) return false;
+  if (active && member.isActive !== (active === 'active')) return false;
+  return true;
+}
+
+function memberRow(member) {
+  const status = member.isActive
+    ? '<span class="badge text-bg-success">Đang hoạt động</span>'
+    : '<span class="badge text-bg-secondary">Ngừng hoạt động</span>';
+  return `<tr>
+    <td class="fw-semibold">${escapeHtml(member.name)}</td>
+    <td class="font-monospace small" title="${escapeHtml(member.address)}">${shortAddress(member.address)}</td>
+    <td>${escapeHtml(member.roleText)}</td>
+    <td>${status}</td>
+  </tr>`;
 }
 
 function renderMembers() {
-  if (!membersLoaded) return;
-  const shown = filteredMembers();
-  document.getElementById('memberCount').textContent = 'Hiển thị ' + shown.length + ' / ' + members.length + ' thành viên';
-  document.getElementById('memberState').textContent = shown.length ? '' : (members.length ? 'Không tìm thấy thành viên phù hợp.' : 'Chưa có thành viên.');
-  document.getElementById('memberBody').innerHTML = shown.map(member => '<tr><td><strong>' + escapeHtml(member.name) + '</strong></td><td title="' + escapeHtml(member.address) + '">' + escapeHtml(shortAddress(member.address)) + '</td><td>' + escapeHtml(member.roleText) + '</td><td><span class="member-status ' + (member.isActive ? 'active' : 'inactive') + '">' + (member.isActive ? 'Đang hoạt động' : 'Không hoạt động') + '</span></td></tr>').join('');
+  const shown = members.filter(matchesMember);
+  document.getElementById('memberBody').innerHTML = shown.map(memberRow).join('');
+  let state = '';
+  if (!members.length) state = 'Chưa có thành viên nào.';
+  else if (!shown.length) state = 'Không tìm thấy thành viên phù hợp.';
+  document.getElementById('memberState').textContent = state;
 }
 
-function renderAvailableAccounts(accounts) {
-  const available = accounts.filter(account => !account.isAdmin && account.role === 0);
-  const select = document.getElementById('memberAccount');
-  select.innerHTML = '<option value="">' + (available.length ? 'Chọn tài khoản' : 'Không có tài khoản chưa đăng ký') + '</option>' + available.map(account => '<option value="' + escapeHtml(account.address) + '">' + escapeHtml(account.address) + '</option>').join('');
+// Ô chọn ví trong form: chỉ các ví chưa có vai trò (trừ ví admin)
+function renderFreeAccounts(accounts) {
+  const free = accounts.filter(account => !account.isAdmin && account.role === ROLE.NONE);
+  const options = free.map(account =>
+    `<option value="${escapeHtml(account.address)}">Account ${account.index} · ${escapeHtml(account.address)}</option>`);
+  const placeholder = free.length ? 'Chọn ví' : 'Không còn ví trống';
+  document.getElementById('memberAccount').innerHTML = `<option value="">${placeholder}</option>` + options.join('');
 }
 
 async function loadMembers() {
   try {
-    const [loadedMembers, accounts] = await Promise.all([apiGet('/participants'), apiGet('/accounts')]);
-    members = loadedMembers;
-    membersLoaded = true;
+    const [participants, accounts] = await Promise.all([apiGet('/participants'), apiGet('/accounts')]);
+    members = participants;
     renderMembers();
-    renderAvailableAccounts(accounts);
+    renderFreeAccounts(accounts);
   } catch (error) {
-    membersLoaded = false;
-    document.getElementById('memberState').textContent = 'Không thể tải danh sách thành viên.';
-    document.getElementById('memberCount').textContent = 'Chưa có dữ liệu';
+    document.getElementById('memberState').textContent = 'Không tải được danh sách thành viên.';
     showToast(error.message);
   }
 }
 
-// =============================================================
-// ĐĂNG KÝ: chỉ quản trị viên thấy nút, giữ form khi giao dịch lỗi.
-// =============================================================
-document.addEventListener('accountChanged', event => {
-  const isAdmin = Boolean(event.detail && event.detail.isAdmin);
-  document.getElementById('openAdminDialog').hidden = !isAdmin;
-  document.getElementById('adminHint').hidden = isAdmin;
-  if (!isAdmin && adminDialog.open && !isRegistering) adminDialog.close();
-});
-
-function closeAdminDialog() {
-  if (!isRegistering) adminDialog.close();
-}
-
-async function registerMember(event) {
+async function submitMember(event) {
   event.preventDefault();
   const form = event.currentTarget;
   const button = form.querySelector('[type="submit"]');
-  const errorBox = document.getElementById('adminFormError');
-  const name = document.getElementById('memberName').value.trim();
-  if (!name) { errorBox.textContent = 'Vui lòng nhập tên thành viên.'; errorBox.hidden = false; return; }
-  const body = { account: document.getElementById('memberAccount').value, name, role: Number(document.getElementById('memberRole').value) };
-  errorBox.hidden = true;
-  isRegistering = true;
-  button.disabled = true;
-  button.innerHTML = '<span class="spinner" aria-hidden="true"></span> Đang xử lý...';
+  const errorBox = document.getElementById('memberFormError');
+  const body = {
+    account: form.elements.account.value,
+    name: form.elements.name.value.trim(),
+    role: Number(form.elements.role.value),
+  };
+  if (!body.account || !body.name) {
+    showFormError(errorBox, 'Vui lòng chọn ví và nhập tên thành viên.');
+    return;
+  }
+
+  showFormError(errorBox, '');
+  setButtonBusy(button, true);
   try {
     const result = await apiPost('/participants', body);
     form.reset();
-    adminDialog.close();
+    bootstrap.Modal.getOrCreateInstance('#memberModal').hide();
     showToast(transactionMessage(result), 'success');
     await loadMembers();
-  } catch (error) { errorBox.textContent = error.message; errorBox.hidden = false; }
-  finally { isRegistering = false; button.disabled = false; button.textContent = 'Đăng ký thành viên'; }
+  } catch (error) {
+    showFormError(errorBox, error.message);
+  } finally {
+    setButtonBusy(button, false);
+  }
 }
 
-document.getElementById('openAdminDialog').addEventListener('click', () => { document.getElementById('adminFormError').hidden = true; adminDialog.showModal(); document.getElementById('memberName').focus(); });
-document.getElementById('closeAdminDialog').addEventListener('click', closeAdminDialog);
-document.getElementById('cancelAdminDialog').addEventListener('click', closeAdminDialog);
-adminDialog.addEventListener('cancel', event => { if (isRegistering) event.preventDefault(); });
-document.getElementById('adminForm').addEventListener('submit', registerMember);
-document.getElementById('memberSearch').addEventListener('input', renderMembers);
-document.getElementById('memberFilterRole').addEventListener('change', renderMembers);
-document.getElementById('memberFilterActive').addEventListener('change', renderMembers);
-document.querySelector('.mode-text').textContent = CONFIG.USE_MOCK ? 'Dữ liệu mẫu' : 'Dữ liệu từ backend';
-document.querySelectorAll('.mock-only').forEach(item => { item.hidden = !CONFIG.USE_MOCK; });
-setupAccountPicker();
-loadMembers();
+// =============================================================
+// KHỞI ĐỘNG: bắt buộc đăng nhập; nút cấp vai trò chỉ dành cho admin
+// =============================================================
+(async function start() {
+  const user = await initPage({ requireLogin: true });
+  if (!user) return;
+
+  document.getElementById('openMemberForm').classList.toggle('d-none', !user.isAdmin);
+  if (user.isAdmin) {
+    document.getElementById('adminHint').textContent = 'Cấp vai trò cho ví mới đăng ký để họ bắt đầu thao tác.';
+  }
+  document.getElementById('memberForm').addEventListener('submit', submitMember);
+  ['memberSearch', 'roleFilter', 'activeFilter'].forEach(id => {
+    document.getElementById(id).addEventListener('input', renderMembers);
+  });
+  loadMembers();
+})();

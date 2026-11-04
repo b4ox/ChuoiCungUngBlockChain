@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Đăng ký | TraceChain</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="css/style.css" rel="stylesheet">
+</head>
+<body class="auth-page d-flex align-items-center py-4">
+  <main class="container d-flex flex-column align-items-center">
+    <a class="auth-brand mb-3" href="trace.html"><i class="bi bi-boxes me-2"></i>TraceChain</a>
+
+    <div class="card auth-card shadow">
+      <div class="card-body p-4">
+        <h1 class="h4 fw-bold mb-1">Tạo tài khoản</h1>
+        <p class="text-body-secondary small mb-4">
+          Mỗi tài khoản gắn với một ví Ganache. Vai trò (sản xuất, vận chuyển…) do quản trị viên cấp trên blockchain.
+        </p>
+
+        <form id="registerForm" novalidate>
+          <div class="mb-3">
+            <label class="form-label" for="displayName">Tên hiển thị</label>
+            <input class="form-control" id="displayName" name="displayName" maxlength="60" placeholder="Ví dụ: Công ty Trà Thái Nguyên" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="username">Tên đăng nhập</label>
+            <input class="form-control" id="username" name="username" maxlength="20" autocomplete="username" required>
+            <div class="form-text">3–20 ký tự: chữ thường không dấu, số hoặc dấu gạch dưới.</div>
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+              <label class="form-label" for="password">Mật khẩu</label>
+              <input class="form-control" id="password" name="password" type="password" autocomplete="new-password" required>
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label" for="confirmPassword">Nhập lại</label>
+              <input class="form-control" id="confirmPassword" name="confirmPassword" type="password" autocomplete="new-password" required>
+            </div>
+            <div class="col-12 form-text mt-1">Tối thiểu 6 ký tự.</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="address">Ví Ganache</label>
+            <select class="form-select" id="address" name="address" required>
+              <option value="">Đang tải danh sách ví...</option>
+            </select>
+          </div>
+          <div class="alert alert-danger py-2 small d-none" id="registerError" role="alert"></div>
+          <button class="btn btn-primary w-100" type="submit">
+            <i class="bi bi-person-plus me-1"></i>Đăng ký
+          </button>
+        </form>
+
+        <p class="text-center small mt-3 mb-0">
+          Đã có tài khoản? <a href="login.html" id="loginLink">Đăng nhập</a>
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/register.js"></script>
+</body>
+</html>

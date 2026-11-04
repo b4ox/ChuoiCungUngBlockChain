@@ -1,38 +1,104 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Thành viên | TraceChain</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"><link href="css/style.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="css/style.css" rel="stylesheet">
 </head>
-<body data-design="contrast">
-<div class="app-shell">
-  <aside class="sidebar"><a class="brand" href="index.html"><span class="brand-icon"><i class="bi bi-box-seam"></i></span><span>Trace<span>Chain</span><small>SUPPLY CHAIN PLATFORM</small></span></a><div class="nav-label">KHÔNG GIAN LÀM VIỆC</div><nav class="side-nav" aria-label="Điều hướng chính"></nav><div class="sidebar-note"><strong>Minh bạch từ nguồn gốc</strong><p>Theo dõi hành trình sản phẩm qua từng giai đoạn.</p></div></aside>
-  <main class="main-content">
-    <header class="topbar"><strong>Thành viên</strong><div class="topbar-right"><span class="mode-pill"><span></span> <span class="mode-text">Dữ liệu mẫu</span></span><label class="role-picker"><span>Đang đóng vai</span><select id="accountSelect" aria-label="Chọn tài khoản đang đóng vai"><option>Đang tải...</option></select></label></div></header>
-    <div class="page-content">
-      <section class="welcome members-welcome"><div><div class="eyebrow">QUẢN LÝ THÀNH VIÊN</div><h1>Đối tác trong chuỗi<span>.</span></h1><p>Xem các thành viên và vai trò tham gia chuỗi cung ứng.</p></div><button id="openAdminDialog" class="primary-button member-add" type="button" hidden><i class="bi bi-person-plus"></i> Đăng ký thành viên</button></section>
-      <p id="adminHint" class="member-hint"><i class="bi bi-info-circle"></i> Chọn vai <strong>Quản trị viên</strong> để đăng ký thành viên mới.</p>
-      <section class="product-list-card member-list"><div class="product-list-heading"><div><h2>Danh sách thành viên</h2><p id="memberCount">Đang tải danh sách...</p></div></div>
-        <div class="member-filters"><label>Tìm thành viên<input id="memberSearch" type="search" placeholder="Tên hoặc địa chỉ ví"></label><label>Vai trò<select id="memberFilterRole"><option value="">Tất cả vai trò</option><option value="1">Nhà sản xuất</option><option value="2">Vận chuyển</option><option value="3">Nhà phân phối</option><option value="4">Nhà bán lẻ</option></select></label><label>Trạng thái<select id="memberFilterActive"><option value="">Tất cả trạng thái</option><option value="active">Đang hoạt động</option><option value="inactive">Không hoạt động</option></select></label></div>
-        <div class="product-state" id="memberState" role="status">Đang tải...</div><div class="table-wrap"><table><thead><tr><th>TÊN THÀNH VIÊN</th><th>ĐỊA CHỈ</th><th>VAI TRÒ</th><th>TRẠNG THÁI</th></tr></thead><tbody id="memberBody"></tbody></table></div>
-      </section>
+<body>
+  <div id="appNav"></div>
+
+  <main class="container py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+      <div>
+        <h1 class="h3 page-title">Thành viên</h1>
+        <p class="text-body-secondary mb-0" id="adminHint">Danh sách thành viên đã được cấp vai trò trên blockchain.</p>
+      </div>
+      <!-- Chỉ quản trị viên (Account 0) mới thấy nút này -->
+      <button class="btn btn-primary d-none" type="button" id="openMemberForm" data-bs-toggle="modal" data-bs-target="#memberModal">
+        <i class="bi bi-person-plus me-1"></i>Cấp vai trò
+      </button>
+    </div>
+
+    <div class="card">
+      <div class="card-header bg-body">
+        <div class="row g-2">
+          <div class="col-md-6">
+            <input class="form-control form-control-sm" id="memberSearch" type="search" placeholder="Tìm theo tên hoặc địa chỉ ví">
+          </div>
+          <div class="col-6 col-md-3">
+            <select class="form-select form-select-sm" id="roleFilter" aria-label="Lọc vai trò">
+              <option value="">Mọi vai trò</option>
+              <option value="1">Nhà sản xuất</option>
+              <option value="2">Vận chuyển</option>
+              <option value="3">Nhà phân phối</option>
+              <option value="4">Nhà bán lẻ</option>
+            </select>
+          </div>
+          <div class="col-6 col-md-3">
+            <select class="form-select form-select-sm" id="activeFilter" aria-label="Lọc trạng thái">
+              <option value="">Mọi trạng thái</option>
+              <option value="active">Đang hoạt động</option>
+              <option value="inactive">Ngừng hoạt động</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr><th>Tên</th><th>Địa chỉ ví</th><th>Vai trò</th><th>Trạng thái</th></tr>
+          </thead>
+          <tbody id="memberBody"></tbody>
+        </table>
+      </div>
+      <p class="text-center text-body-secondary small my-3" id="memberState">Đang tải...</p>
     </div>
   </main>
-</div>
-<dialog id="adminDialog" aria-labelledby="adminDialogTitle" aria-describedby="adminDialogDescription">
-  <div class="member-dialog-heading"><span class="form-icon"><i class="bi bi-person-plus"></i></span><button id="closeAdminDialog" type="button" class="member-close" aria-label="Đóng cửa sổ đăng ký"><i class="bi bi-x-lg"></i></button></div>
-  <h2 id="adminDialogTitle">Đăng ký thành viên</h2><p id="adminDialogDescription" class="member-dialog-description">Thêm một đối tác và chọn vai trò của họ trong chuỗi cung ứng.</p>
-  <form id="adminForm" class="member-form">
-    <label for="memberName">Tên thành viên <span>*</span></label><input id="memberName" required maxlength="200" placeholder="Ví dụ: Công ty Trà Thái Nguyên" autocomplete="off">
-    <label for="memberAccount">Tài khoản <span>*</span></label><select id="memberAccount" required><option value="">Đang tải tài khoản...</option></select><p class="member-field-help">Chọn địa chỉ ví chưa đăng ký của đối tác.</p>
-    <label for="memberRole">Vai trò <span>*</span></label><select id="memberRole" required><option value="">Chọn vai trò</option><option value="1">Nhà sản xuất</option><option value="2">Vận chuyển</option><option value="3">Nhà phân phối</option><option value="4">Nhà bán lẻ</option></select><p class="member-field-help">Vai trò quyết định các thao tác đối tác có thể thực hiện.</p>
-    <p class="mock-notice mock-only">Chế độ mẫu chỉ mô phỏng giao dịch, dữ liệu không được lưu.</p><p id="adminFormError" class="member-form-error" role="alert" hidden></p>
-    <div class="member-dialog-actions"><button id="cancelAdminDialog" class="member-cancel" type="button">Hủy</button><button class="primary-button" type="submit">Đăng ký thành viên</button></div>
-  </form>
-</dialog>
-<div id="toastContainer" class="toast-container" aria-live="polite"></div>
-<script src="js/config.js"></script><script src="js/api.js"></script><script src="js/common.js"></script><script src="js/admin.js"></script>
-</body></html>
+
+  <!-- ===== FORM CẤP VAI TRÒ (registerParticipant) ===== -->
+  <div class="modal fade" id="memberModal" tabindex="-1" aria-labelledby="memberModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <form class="modal-content" id="memberForm" novalidate>
+        <div class="modal-header">
+          <h2 class="modal-title h5" id="memberModalTitle">Cấp vai trò cho ví</h2>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label" for="memberAccount">Ví chưa có vai trò</label>
+            <select class="form-select" id="memberAccount" name="account" required></select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="memberName">Tên thành viên</label>
+            <input class="form-control" id="memberName" name="name" maxlength="60" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="memberRole">Vai trò</label>
+            <select class="form-select" id="memberRole" name="role">
+              <option value="1">Nhà sản xuất</option>
+              <option value="2">Vận chuyển</option>
+              <option value="3">Nhà phân phối</option>
+              <option value="4">Nhà bán lẻ</option>
+            </select>
+          </div>
+          <div class="alert alert-danger py-2 small d-none mb-0" id="memberFormError" role="alert"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Huỷ</button>
+          <button type="submit" class="btn btn-primary">Ghi lên blockchain</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>
