@@ -1,5 +1,7 @@
 ## Vùng
-- [ ] contract  - [ ] backend  - [ ] frontend
+- [ ] contract
+- [ ] backend
+- [ ] frontend
 
 ## Thay đổi gì
 
