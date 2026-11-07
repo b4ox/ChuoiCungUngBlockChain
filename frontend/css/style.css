@@ -1,0 +1,146 @@
+/* =============================================================
+   GIAO DIỆN CHUNG: dựa trên Bootstrap 5.3, file này chỉ thêm
+   những phần Bootstrap không có sẵn (thẻ thống kê, timeline,
+   thanh tiến trình 6 bước, trang đăng nhập).
+   ============================================================= */
+:root {
+  --brand: #0d6efd;
+  --page-bg: #f4f6fb;
+}
+
+body {
+  background: var(--page-bg);
+  min-height: 100vh;
+}
+
+.page-title {
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+/* ===== THẺ THỐNG KÊ (trang Tổng quan) ===== */
+.stat-card .stat-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-size: 1.3rem;
+}
+
+.stat-card .stat-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+/* ===== TRANG ĐĂNG NHẬP / ĐĂNG KÝ ===== */
+.auth-page {
+  background: linear-gradient(135deg, #1f2937 0%, #0d6efd 100%);
+}
+
+.auth-card {
+  max-width: 440px;
+  width: 100%;
+}
+
+.auth-brand {
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.6rem;
+  text-decoration: none;
+}
+
+/* ===== THANH TIẾN TRÌNH 6 BƯỚC (trang Tra cứu) ===== */
+.step-track {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.25rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.step-track li {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--bs-secondary-color);
+}
+
+.step-track .step-dot {
+  width: 32px;
+  height: 32px;
+  margin: 0 auto 0.35rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  background: var(--bs-secondary-bg);
+  border: 2px solid var(--bs-border-color);
+}
+
+.step-track li.done .step-dot {
+  background: var(--bs-success);
+  border-color: var(--bs-success);
+  color: #fff;
+}
+
+.step-track li.current .step-dot {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+
+.step-track li.done,
+.step-track li.current {
+  color: var(--bs-body-color);
+  font-weight: 600;
+}
+
+/* ===== TIMELINE LỊCH SỬ (trang Tra cứu) ===== */
+.timeline {
+  list-style: none;
+  padding-left: 1.5rem;
+  margin: 0;
+  border-left: 2px solid var(--bs-border-color);
+}
+
+.timeline li {
+  position: relative;
+  padding-bottom: 1.25rem;
+}
+
+.timeline li::before {
+  content: "";
+  position: absolute;
+  left: calc(-1.5rem - 7px);
+  top: 0.3rem;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--bs-success);
+  box-shadow: 0 0 0 3px var(--page-bg);
+}
+
+.timeline li:last-child {
+  padding-bottom: 0;
+}
+
+/* ===== MÃ QR ===== */
+.qr-thumb {
+  width: 160px;
+  height: 160px;
+  cursor: zoom-in;
+}
+
+/* Màn hình nhỏ: chữ dưới thanh tiến trình gọn lại để không tràn ngang */
+@media (max-width: 576px) {
+  .step-track li {
+    font-size: 0.65rem;
+  }
+
+  .step-track .step-dot {
+    width: 26px;
+    height: 26px;
+  }
+}
