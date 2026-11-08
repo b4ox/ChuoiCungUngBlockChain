@@ -6,7 +6,7 @@
 const path = require('path');
 const express = require('express');
 const cors = require('cors');
-const { RPC_URL, CONTRACT_ADDRESS } = require('./config/blockchain');
+const { RPC_URL, CONTRACT_ADDRESS, CONTRACT_READY, CHAIN_NAME } = require('./config/blockchain');
 const service = require('./services');
 const errorHandler = require('./middleware/errorHandler');
 const { getPublicUrl } = require('./utils/publicUrl');
@@ -32,6 +32,11 @@ app.use('/api/accounts', require('./routes/accountRoutes'));
 app.use('/api/participants', require('./routes/participantRoutes'));
 app.use('/api/products', require('./routes/productRoutes'));
 app.use('/api/events', require('./routes/eventRoutes'));
+// v1.1: đăng nhập bằng ví, hồ sơ doanh nghiệp, doanh nghiệp công khai, cấu hình chuỗi
+app.use('/api/config', require('./routes/configRoutes'));
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/applications', require('./routes/applicationRoutes'));
+app.use('/api/businesses', require('./routes/businessRoutes'));
 
 // Đường dẫn /api không tồn tại -> trả JSON thay vì trang HTML mặc định
 app.use('/api', (req, res) => {
@@ -45,6 +50,6 @@ app.listen(PORT, () => {
   if (service.USE_MOCK) {
     console.log('Chế độ MOCK_CHAIN=true: đọc dữ liệu trong shared/mock, không gọi Ganache');
   } else {
-    console.log(`Blockchain: ${RPC_URL}  |  Contract: ${CONTRACT_ADDRESS}`);
+    console.log(`Blockchain: ${CHAIN_NAME} (${RPC_URL})  |  Contract: ${CONTRACT_READY ? CONTRACT_ADDRESS : 'CHƯA DEPLOY'}`);
   }
 });

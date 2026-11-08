@@ -43,6 +43,25 @@ async function getEvents(limit) {
   return readMock('events.json').slice(0, limit);
 }
 
+// Ví quản trị trong dữ liệu mẫu = tài khoản có isAdmin
+async function getOwner() {
+  return readMock('accounts.json').find((a) => a.isAdmin).address;
+}
+
+async function getParticipant(address) {
+  const found = readMock('participants.json').find((p) => p.address.toLowerCase() === address.toLowerCase());
+  return found || null;
+}
+
+// Mọi sản phẩm kèm lịch sử (ghép từ products.json + events.json)
+async function getAllHistories() {
+  const result = [];
+  for (const product of readMock('products.json')) {
+    result.push(await getProductDetail(product.id));
+  }
+  return result;
+}
+
 // Mọi giao dịch ghi đều "thành công" với cùng một kết quả mẫu
 async function fakeTx(from) {
   requireAddress(from, 'from');
@@ -52,6 +71,9 @@ async function fakeTx(from) {
 
 module.exports = {
   getHealth,
+  getOwner,
+  getParticipant,
+  getAllHistories,
   getAccounts: async () => readMock('accounts.json'),
   getParticipants: async () => readMock('participants.json'),
   getProducts,

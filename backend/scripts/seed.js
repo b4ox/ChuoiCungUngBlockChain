@@ -5,7 +5,7 @@
 //   - Tạo 3 sản phẩm ở 3 trạng thái: Đã bán, Ở nhà phân phối, Đã sản xuất
 // Dùng chính service của backend nên cũng là bài kiểm tra luồng 6 bước.
 // =============================================================
-const { provider, readContract, RPC_URL, CONTRACT_ADDRESS } = require('../config/blockchain');
+const { provider, readContract, RPC_URL, CONTRACT_ADDRESS, CHAIN_ID, GANACHE_CHAIN_ID } = require('../config/blockchain');
 const service = require('../services/supplyChainService');
 
 const MEMBERS = [
@@ -41,6 +41,11 @@ async function moveProduct(acc, id, steps) {
 }
 
 async function main() {
+  // Seed cần tài khoản mở khoá sẵn, chỉ Ganache có. Trên Sepolia doanh nghiệp tự đăng ký.
+  if (CHAIN_ID !== GANACHE_CHAIN_ID) {
+    console.log('Seed chỉ chạy với Ganache local (CHAIN_ID=1337 trong backend/.env). Trên Sepolia không cần seed.');
+    return;
+  }
   console.log(`Seed vào contract ${CONTRACT_ADDRESS} tại ${RPC_URL}`);
   const acc = await provider.send('eth_accounts', []);
 

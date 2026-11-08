@@ -1,7 +1,9 @@
 # Chuỗi cung ứng ứng dụng Blockchain
 
 DApp truy xuất nguồn gốc sản phẩm: Nhà sản xuất → Vận chuyển → Nhà phân phối → Vận chuyển → Nhà bán lẻ → Đã bán.
-Chạy hoàn toàn trên máy local: Remix IDE + Ganache + Express + HTML/Bootstrap.
+Contract chạy trên mạng thử nghiệm **Sepolia**. Doanh nghiệp đăng nhập và đăng ký bằng **ví MetaMask** của mình,
+quản trị viên duyệt hồ sơ, mọi giao dịch do người dùng tự ký và trả phí gas bằng SepoliaETH (miễn phí từ faucet).
+Công nghệ: Remix IDE + MetaMask + Express + HTML/Bootstrap. Vẫn chạy thử được trên Ganache local.
 
 ## Phân công
 
@@ -20,21 +22,30 @@ Quy tắc làm việc (cho người và AI agent): xem `AGENTS.md`. Claude Code 
 ## Cài đặt (một lần)
 
 ```bash
-npm install                 # Ganache + remixd ở thư mục gốc
-cd backend && npm install   # sau khi Backend đã có package.json
-cp backend/.env.example backend/.env
+npm install                 # Ganache + remixd ở thư mục gốc (chỉ cần nếu chạy thử local)
+cd backend && npm install
+cp backend/.env.example backend/.env   # để trống = dùng Sepolia theo shared/contract/deployment.json
 ```
 
-## Chạy toàn hệ thống
+## Chạy trên Sepolia (chính thức)
+
+1. Quản trị viên deploy contract bằng Remix + MetaMask, điền `address`, `deployer`, `deployBlock`
+   vào `shared/contract/deployment.json` — xem [contracts/DEPLOY.md](contracts/DEPLOY.md), mục 5. Làm **một lần**.
+2. `npm run backend` — mở `http://localhost:3000`.
+3. Doanh nghiệp: cài MetaMask, chọn Sepolia, lấy SepoliaETH từ faucet → **Đăng nhập bằng ví** → gửi hồ sơ.
+4. Quản trị viên (đăng nhập bằng ví đã deploy) → **Quản trị** → duyệt hồ sơ (ký giao dịch trong MetaMask).
+5. Doanh nghiệp đã duyệt dùng chức năng của vai trò; ai cũng xem được trang **Doanh nghiệp** và **Tra cứu**.
+
+Dữ liệu trên Sepolia tồn tại lâu dài, không cần deploy hay seed lại mỗi lần chạy. Hồ sơ doanh nghiệp lưu ở
+`backend/data/applications.json` (không commit, nên mỗi máy chạy backend có hồ sơ riêng).
+
+## Chạy thử trên Ganache local
 
 1. `npm run chain` — Ganache tại `http://127.0.0.1:7545` (chainId 1337, 10 tài khoản cố định).
-2. Deploy contract:
-   - `npm run remixd`, mở https://remix.ethereum.org → workspace **localhost** → `SupplyChain.sol`.
-   - Compiler 0.8.20+, Advanced → **EVM version = paris** → Compile.
-   - Deploy & Run → Environment **Custom - External Http Provider** → `http://127.0.0.1:7545` → Account 0 → Deploy.
-   - Địa chỉ phải trùng `shared/contract/deployment.json` (nếu Ganache vừa khởi động và đây là giao dịch đầu tiên). Nếu khác, đặt `CONTRACT_ADDRESS` trong `backend/.env`.
-3. `npm run seed` — tạo sẵn thành viên và sản phẩm mẫu.
-4. `npm run backend` — mở `http://localhost:3000`.
+2. Deploy bằng Remix (Custom - External Http Provider, Account 0, giao dịch đầu tiên) → địa chỉ `0xe78A0F7E598Cc8b0Bb87894B0F60dD2a88d6a8Ab`.
+3. Trong `backend/.env`: `RPC_URL=http://127.0.0.1:7545`, `CHAIN_ID=1337`, `CONTRACT_ADDRESS=0xe78A…a8Ab`, `DEPLOY_BLOCK=0`.
+4. `npm run seed` (tuỳ chọn, tạo 4 thành viên + 3 sản phẩm) → `npm run backend`.
+5. MetaMask: thêm mạng `http://127.0.0.1:7545`, chain ID 1337; import khoá Account 0 làm ví quản trị.
 
 ## Git — 3 nhánh cố định
 

@@ -12,29 +12,37 @@ Thiếu dữ liệu cần hiển thị → viết "Đề xuất thay đổi" cho
 
 ## Công nghệ cố định
 HTML5 + CSS + JavaScript thuần (script thường, không ES module bundler), Bootstrap 5.3 + Bootstrap Icons qua CDN.
-KHÔNG dùng: React/Vue/Angular, npm build, TypeScript, jQuery, ethers.js/web3.js (frontend không gọi blockchain).
+ethers.js **v6.13.4 bản UMD** qua CDN (`https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js`), chỉ dùng trong `js/wallet.js`
+để làm việc với MetaMask (kết nối, chuyển mạng, ký đăng nhập, gửi giao dịch).
+KHÔNG dùng: React/Vue/Angular, npm build, TypeScript, jQuery, web3.js.
 
 ## Cấu trúc
 ```
 frontend/
 ├── index.html  admin.html  products.html  actions.html  trace.html
+├── login.html  register.html  businesses.html
 ├── css/style.css
 ├── img/qr-sample.png            # ảnh QR dùng khi chạy mock
 └── js/
     ├── config.js                # CONFIG.USE_MOCK, API_BASE, MOCK_BASE, MOCK_FAIL
-    ├── api.js                   # apiGet / apiPost (+ ánh xạ mock)
-    ├── common.js                # navbar, chọn vai, showToast, shortAddress, statusBadge
-    └── dashboard.js admin.js products.js actions.js trace.js
+    ├── api.js                   # apiGet / apiPost / apiPut (+ token, ánh xạ mock)
+    ├── common.js                # phiên ví, navbar, showToast, shortAddress, statusBadge
+    ├── wallet.js                # MetaMask: connectWallet, signInWithWallet, sendContractTx
+    └── dashboard.js admin.js products.js actions.js trace.js login.js register.js businesses.js
 ```
-Thứ tự nạp script trong mỗi trang: `config.js` → `api.js` → `common.js` → script của trang.
+Thứ tự nạp script: (ethers UMD) → `config.js` → `api.js` → `common.js` → (`wallet.js`) → script của trang.
+Trang cần ví (login, register, products, actions, admin) nạp thêm ethers + `wallet.js`.
 
 ## Quy tắc quan trọng
-- Mọi dữ liệu lấy qua `apiGet(url)` / `apiPost(url, body)` trong `api.js`. Trang KHÔNG gọi `fetch` trực tiếp.
-- `apiPost` tự gắn `from` = tài khoản đang đóng vai (lưu trong `localStorage` key `currentAccount`).
+- Mọi dữ liệu backend lấy qua `apiGet` / `apiPost` / `apiPut` trong `api.js`. Trang KHÔNG gọi `fetch` trực tiếp.
+- Phiên đăng nhập `{ token, address }` lưu ở `localStorage` key `session`; `api.js` tự gắn `Authorization: Bearer`.
+- Giao dịch lên chuỗi CHỈ qua `sendContractTx(method, args)` trong `wallet.js` (MetaMask hỏi người dùng xác nhận).
+  Không gọi các API ghi cũ của v1 (`POST /products`, `/participants`...).
+- Chức năng theo vai trò chỉ mở khi vai trò trên chuỗi đang hoạt động (`user.isActive`); hồ sơ chờ duyệt hiện nút bị khoá.
 - Khi `CONFIG.USE_MOCK = true`: GET đọc `../shared/mock/<file>.json` theo bảng ánh xạ; POST trả `tx-success.json`
   sau 800 ms (hoặc `error.json` nếu `MOCK_FAIL = true`); ảnh QR dùng `img/qr-sample.png`.
 - Hiển thị trạng thái/vai trò bằng `statusText`/`roleText` từ API, màu badge theo `status` (0–5).
-- Khi chờ giao dịch: khoá nút + spinner; luôn mở lại nút trong `finally`.
+- Khi chờ giao dịch: khoá nút + spinner ("Xác nhận trong MetaMask..." rồi "Đang chờ vào khối..."); luôn mở lại nút trong `finally`.
 - Mỗi trang có 1 file JS riêng; hàm dùng chung đặt trong `common.js`.
 
 ## Kiểm tra

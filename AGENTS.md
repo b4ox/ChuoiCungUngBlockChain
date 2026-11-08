@@ -8,18 +8,31 @@
 
 Tài liệu: `docs/KE_HOACH_TONG.md` (kế hoạch tổng, code mẫu) và `docs/LO_TRINH_<VÙNG>.md` (lộ trình, checklist, ca kiểm thử của từng vùng). Đọc lộ trình của vùng mình trước khi bắt đầu một nhiệm vụ.
 
-DApp truy xuất nguồn gốc sản phẩm trong chuỗi cung ứng, chạy hoàn toàn trên máy local để demo.
+DApp truy xuất nguồn gốc sản phẩm trong chuỗi cung ứng. Contract chạy trên mạng thử nghiệm **Sepolia**;
+doanh nghiệp đăng nhập, đăng ký và ký giao dịch bằng **ví MetaMask** của mình (xem mục 1a).
 
 | Lớp | Công nghệ | Thư mục |
 | --- | --- | --- |
 | Smart contract | Solidity ^0.8.20, viết và deploy bằng Remix IDE, EVM version `paris` | `contracts/` |
-| Blockchain local | Ganache CLI, port 7545, chainId 1337, tài khoản cố định (`-d`) | (chạy bằng `npm run chain`) |
+| Blockchain | **Sepolia** (chainId 11155111), RPC công khai trong `deployment.json`. Chạy thử: Ganache CLI port 7545, chainId 1337 | — (`npm run chain` khi chạy thử) |
+| Ví người dùng | MetaMask (tiện ích trình duyệt), frontend dùng ethers.js v6 bản UMD qua CDN | `frontend/js/wallet.js` |
 | Backend | Node.js 20, Express 4, ethers.js v6, CommonJS | `backend/` |
 | Frontend | HTML + Bootstrap 5 + JavaScript thuần, không build | `frontend/` |
 | Giao tiếp chung | ABI, API spec, dữ liệu mock | `shared/` |
 
-Luồng: Frontend --(REST /api)--> Backend --(ethers.js, JSON-RPC)--> Ganache (contract SupplyChain).
-Frontend KHÔNG gọi blockchain trực tiếp.
+Luồng:
+- Đọc dữ liệu: Frontend --(REST /api)--> Backend --(ethers.js, JSON-RPC)--> Sepolia (contract SupplyChain).
+- Ghi lên chuỗi: Frontend --(ethers.js + MetaMask, người dùng xác nhận)--> Sepolia. Backend KHÔNG giữ private key nào.
+- Dữ liệu ngoài chuỗi (đăng nhập bằng chữ ký, hồ sơ doanh nghiệp): Frontend --(REST /api)--> Backend (file `backend/data/`).
+
+### 1a. Luồng nghiệp vụ v1.1 (đã chốt)
+1. Doanh nghiệp tự tạo ví MetaMask, lấy SepoliaETH từ faucet.
+2. Đăng nhập bằng ví: ký thông điệp có nonce (miễn phí) → backend kiểm tra chữ ký → cấp token.
+3. Gửi hồ sơ doanh nghiệp (backend lưu, chưa ghi gì lên chuỗi). Chưa duyệt thì chức năng vai trò bị khoá
+   (giao diện khoá nút, contract tự từ chối `Sai vai tro`).
+4. Quản trị viên (ví đã deploy contract) duyệt: ký `registerParticipant` → backend kiểm tra lại trên chuỗi rồi đánh dấu đã duyệt.
+   Từ chối: ghi lý do ở backend. Thu hồi: ký `deactivateParticipant`.
+5. Trang **Doanh nghiệp** và **Tra cứu** công khai, không cần ví. Người đại diện / điện thoại / email không bao giờ công khai, không lên chuỗi.
 
 ## 2. Ranh giới sở hữu (QUAN TRỌNG NHẤT)
 
@@ -122,13 +135,13 @@ Quy tắc cho AI agent:
 
 | Thành phần | Lệnh | Địa chỉ |
 | --- | --- | --- |
-| Ganache | `npm run chain` (ở thư mục gốc) | `http://127.0.0.1:7545`, chainId 1337 |
-| Remix ↔ thư mục `contracts/` | `npm run remixd` | Remix → workspace *localhost* |
+| Contract trên Sepolia | Deploy một lần bằng Remix + MetaMask (`contracts/DEPLOY.md`, mục 5) | `shared/contract/deployment.json` |
 | Backend (+ phục vụ frontend) | `cd backend && npm run dev` | `http://localhost:3000` |
 | Frontend chạy riêng (mock) | VS Code Live Server mở từ thư mục gốc | `http://127.0.0.1:5500/frontend/index.html` |
+| Chạy thử local (tuỳ chọn) | `npm run chain` + biến `RPC_URL`, `CHAIN_ID`, `CONTRACT_ADDRESS` trong `backend/.env` | `http://127.0.0.1:7545`, chainId 1337 |
 
-Ganache chạy với `-d` nên 10 tài khoản luôn giống nhau trên máy mọi người:
-Account 0 = Admin (deploy), 1 = Nhà sản xuất, 2 = Vận chuyển, 3 = Nhà phân phối, 4 = Nhà bán lẻ.
+Trên Sepolia: ví quản trị = ví đã deploy contract; doanh nghiệp dùng ví MetaMask riêng.
+Khi chạy thử Ganache (`-d`): Account 0 = Admin (deploy), 1 = Nhà sản xuất, 2 = Vận chuyển, 3 = Nhà phân phối, 4 = Nhà bán lẻ.
 
 ## 7. Định nghĩa "xong" cho một nhiệm vụ của agent
 

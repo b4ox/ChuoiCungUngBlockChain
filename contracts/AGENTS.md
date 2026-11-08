@@ -26,10 +26,12 @@ Không đổi chữ ký hàm, thứ tự enum, thứ tự trường struct, tên
 Được thêm hàm mới. Đổi phá vỡ → tăng `version` trong `deployment.json` + Changelog + báo Backend.
 
 ## Mỗi khi sửa contract
-1. Compile trên Remix: Solidity 0.8.20+, Advanced → **EVM version = paris** (Ganache không hỗ trợ PUSH0).
+1. Compile trên Remix: Solidity 0.8.20+, Advanced → **EVM version = paris** (giữ tương thích Ganache khi chạy thử).
 2. Copy ABI mới vào `shared/contract/SupplyChain.abi.json` (định dạng JSON mảng, thụt lề 2 dấu cách).
-3. Nếu deploy lại: Ganache vừa khởi động (`npm run chain`), Account 0, giao dịch đầu tiên → ghi địa chỉ vào `shared/contract/deployment.json`.
+3. Nếu deploy lại lên Sepolia: Remix → Injected Provider - MetaMask bằng ví quản trị → ghi `address`, `deployer`, `deployBlock`
+   vào `shared/contract/deployment.json` (xem `DEPLOY.md`, mục 5). Deploy mới = contract mới, dữ liệu cũ ở contract cũ;
+   hồ sơ đã duyệt ở backend phải duyệt lại.
 
 ## Kiểm tra
-- Unit test: `contracts/tests/SupplyChain_test.sol` chạy bằng plugin *Solidity Unit Testing* của Remix.
+- Unit test: các file `contracts/tests/*_test.sol` chạy bằng plugin *Solidity Unit Testing* của Remix.
 - Bảng ca kiểm thử bắt buộc nằm trong `docs/LO_TRINH_CONTRACT.md`, mục 6.
