@@ -15,4 +15,9 @@ contract NonAdminCaller {
             SupplyChain.Role.Manufacturer
         );
     }
+
+    // Thử thu hồi vai trò khi không phải owner.
+    function deactivate(SupplyChain _target, address _account) external {
+        _target.deactivateParticipant(_account);
+    }
 }

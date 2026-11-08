@@ -57,6 +57,7 @@ contract SupplyChain {
     event ParticipantRegistered(address indexed account, string name, Role role);
     event ProductCreated(uint256 indexed id, string name, address indexed manufacturer);
     event StatusChanged(uint256 indexed id, Status status, address indexed actor, string note);
+    event ParticipantDeactivated(address indexed account);
 
     // ===== 4. MODIFIERS: kiểm tra điều kiện trước khi chạy hàm =====
     modifier onlyOwner() {
@@ -90,6 +91,16 @@ contract SupplyChain {
         }
         participants[_account] = Participant(_name, _role, true);
         emit ParticipantRegistered(_account, _name, _role);
+    }
+
+    // Admin thu hồi vai trò của một ví (ví dụ doanh nghiệp vi phạm).
+    // Ví bị khoá không gọi được hàm nghiệp vụ nữa, lịch sử cũ giữ nguyên.
+    // Muốn mở lại: admin gọi registerParticipant cho ví đó lần nữa.
+    function deactivateParticipant(address _account) external onlyOwner {
+        require(participants[_account].role != Role.None, "Chua duoc dang ky");
+        require(participants[_account].isActive, "Thanh vien da bi khoa");
+        participants[_account].isActive = false;
+        emit ParticipantDeactivated(_account);
     }
 
     // ===== 6. NGHIỆP VỤ CHUỖI CUNG ỨNG =====

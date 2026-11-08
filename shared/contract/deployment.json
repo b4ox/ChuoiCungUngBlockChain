@@ -1,9 +1,11 @@
 {
-  "version": "1.0.0",
-  "network": "ganache-local",
-  "chainId": 1337,
-  "rpcUrl": "http://127.0.0.1:7545",
-  "address": "0xe78A0F7E598Cc8b0Bb87894B0F60dD2a88d6a8Ab",
-  "deployer": "0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1",
-  "note": "Da doi chieu truc tiep tren Ganache ngay 2026-10-30: chainId, owner, runtime bytecode va ABI khop artifact Remix; Solidity 0.8.20, EVM paris."
+  "version": "1.1.0",
+  "network": "sepolia",
+  "chainId": 11155111,
+  "rpcUrl": "https://ethereum-sepolia-rpc.publicnode.com",
+  "explorerUrl": "https://sepolia.etherscan.io",
+  "address": "",
+  "deployer": "",
+  "deployBlock": 0,
+  "note": "Chua deploy len Sepolia. Deploy bang Remix + MetaMask (contracts/DEPLOY.md, muc 5) roi dien address, deployer, deployBlock."
 }
