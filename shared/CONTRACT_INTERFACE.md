@@ -1,4 +1,4 @@
-# CONTRACT_INTERFACE.md — SupplyChain v1
+# CONTRACT_INTERFACE.md — SupplyChain v1.1
 
 > Chủ sở hữu: **Contract (A)**. Trạng thái: **bản nháp v1** — A xác nhận và đóng băng tại mốc M1 (hết Ngày 2).
 > Backend và Frontend dựa vào file này. Sau M1 chỉ được THÊM; đổi/xoá phải tăng version và ghi Changelog.
@@ -35,7 +35,8 @@ struct History { Status status; address actor; uint256 timestamp; string note; }
 
 | Hàm | Ai được gọi | Điều kiện |
 | --- | --- | --- |
-| `registerParticipant(address _account, string _name, Role _role)` | owner (Account 0) | `_role != None` |
+| `registerParticipant(address _account, string _name, Role _role)` | owner (ví đã deploy) | `_role != None`. Gọi lại cho ví đã có thì ghi đè tên/vai trò và mở lại ví bị khoá |
+| `deactivateParticipant(address _account)` | owner | Ví đã đăng ký và đang hoạt động → `isActive = false` (v1.1) |
 | `createProduct(string _name, string _origin, string _description)` | Manufacturer | — |
 | `pickUpProduct(uint256 _id, string _note)` | Transporter | status 0 → 1 hoặc 2 → 3 |
 | `receiveProduct(uint256 _id, string _note)` | Distributor (1 → 2) / Retailer (3 → 4) | đúng vai + đúng trạng thái |
@@ -58,6 +59,7 @@ struct History { Status status; address actor; uint256 timestamp; string note; }
 event ParticipantRegistered(address indexed account, string name, Role role);
 event ProductCreated(uint256 indexed id, string name, address indexed manufacturer);
 event StatusChanged(uint256 indexed id, Status status, address indexed actor, string note);
+event ParticipantDeactivated(address indexed account); // v1.1
 ```
 `StatusChanged` được phát ở MỌI bước (kể cả khi tạo sản phẩm, status = 0).
 
@@ -68,7 +70,8 @@ event StatusChanged(uint256 indexed id, Status status, address indexed actor, st
 | `Chi admin duoc phep` | Không phải owner gọi `registerParticipant` |
 | `Vai tro khong hop le` | Đăng ký với role None |
 | `Sai vai tro` | Sai vai trò / chưa đăng ký ở hàm có `onlyRole` |
-| `Chua duoc dang ky` | Tài khoản chưa đăng ký gọi `receiveProduct` |
+| `Chua duoc dang ky` | Tài khoản chưa đăng ký (hoặc đã bị khoá) gọi `receiveProduct`; thu hồi ví chưa đăng ký |
+| `Thanh vien da bi khoa` | Thu hồi ví đã bị khoá (v1.1) |
 | `San pham khong ton tai` | id = 0 hoặc > productCount |
 | `Chua the van chuyen o trang thai nay` | `pickUpProduct` sai trạng thái |
 | `Sai vai tro hoac sai trang thai` | `receiveProduct` sai vai/trạng thái |
@@ -78,6 +81,9 @@ event StatusChanged(uint256 indexed id, Status status, address indexed actor, st
 ## Triển khai
 - Compile: Solidity 0.8.20+, **EVM version = paris**.
 - ABI: `shared/contract/SupplyChain.abi.json`. Địa chỉ: `shared/contract/deployment.json`.
+- Mạng chính thức: **Sepolia** (chainId 11155111), deploy bằng Remix + MetaMask (xem `contracts/DEPLOY.md`).
+  Ví deploy là owner (quản trị viên). `deployBlock` trong `deployment.json` giúp backend chỉ đọc event từ khối đó trở đi.
 
 ## Changelog
 - v1.0.0 — bản đầu tiên.
+- v1.1.0 — THÊM `deactivateParticipant`, event `ParticipantDeactivated`, câu lỗi `Thanh vien da bi khoa`. Không đổi gì của v1.0.
