@@ -144,3 +144,127 @@ body {
     height: 26px;
   }
 }
+
+/* ===== ĐĂNG KÝ DOANH NGHIỆP: thanh 4 bước ===== */
+.reg-steps {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+}
+
+.reg-steps li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--bs-secondary-color);
+  border-top: 4px solid var(--bs-border-color);
+  padding-top: 0.5rem;
+}
+
+.reg-steps .reg-n {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: var(--bs-secondary-bg);
+}
+
+.reg-steps li.done {
+  color: var(--bs-success);
+  border-top-color: var(--bs-success);
+}
+
+.reg-steps li.done .reg-n {
+  background: var(--bs-success);
+  color: #fff;
+}
+
+.reg-steps li.current {
+  color: var(--bs-body-color);
+  font-weight: 600;
+  border-top-color: var(--brand);
+}
+
+.reg-steps li.current .reg-n {
+  background: var(--brand);
+  color: #fff;
+}
+
+/* Nhãn mức công khai của từng ô trong form hồ sơ */
+.vis-public {
+  background: var(--bs-success-bg-subtle);
+  color: var(--bs-success-text-emphasis);
+  font-weight: 600;
+}
+
+.vis-private {
+  background: var(--bs-secondary-bg);
+  color: var(--bs-secondary-color);
+  font-weight: 600;
+}
+
+/* Ô chọn vai trò dạng thẻ */
+.role-option {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  border: 1px solid var(--bs-border-color);
+  border-radius: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  cursor: pointer;
+  height: 100%;
+}
+
+.role-option small {
+  display: block;
+  color: var(--bs-secondary-color);
+}
+
+.role-option:has(input:checked) {
+  border-color: var(--brand);
+  background: var(--bs-primary-bg-subtle);
+}
+
+/* ===== TRANG DOANH NGHIỆP ===== */
+.verified {
+  color: var(--bs-success);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.biz-stat {
+  background: var(--bs-tertiary-bg);
+  border-radius: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  display: grid;
+}
+
+.biz-stat b {
+  font-size: 1.25rem;
+}
+
+.biz-stat span {
+  font-size: 0.75rem;
+  color: var(--bs-secondary-color);
+}
+
+.login-steps li + li {
+  margin-top: 0.35rem;
+}
+
+@media (max-width: 576px) {
+  .reg-steps li {
+    font-size: 0;
+  }
+
+  .reg-steps li.current {
+    font-size: 0.75rem;
+  }
+}

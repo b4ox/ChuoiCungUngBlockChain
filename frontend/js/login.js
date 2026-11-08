@@ -1,33 +1,31 @@
 // =============================================================
-// ĐĂNG NHẬP: kiểm tra tài khoản, lưu phiên rồi quay về trang
-// người dùng định mở (tham số ?next=).
+// ĐĂNG NHẬP BẰNG VÍ: kết nối MetaMask -> ký thông điệp -> nhận token.
+// Xong thì đưa người dùng tới đúng chỗ:
+//   ví quản trị -> Quản trị; thành viên đang hoạt động -> trang định mở;
+//   ví chưa là thành viên -> trang Hồ sơ doanh nghiệp.
 // =============================================================
 
 // Chỉ cho quay về trang .html trong cùng thư mục (tránh chuyển hướng ra web lạ)
 function nextPage() {
   const next = new URLSearchParams(location.search).get('next') || '';
-  return /^[a-z]+\.html(\?[\w=&%-]*)?$/.test(next) ? next : 'index.html';
+  return /^[a-z]+\.html(\?[\w=&%.-]*)?$/.test(next) ? next : 'index.html';
 }
 
-async function submitLogin(event) {
-  event.preventDefault();
-  const form = event.currentTarget;
-  const button = form.querySelector('[type="submit"]');
+async function destinationAfterLogin() {
+  const user = await loadCurrentUser();
+  if (user.isAdmin) return new URLSearchParams(location.search).get('next') ? nextPage() : 'admin.html';
+  if (user.isActive) return nextPage();
+  return 'register.html';
+}
+
+async function login() {
+  const button = document.getElementById('loginButton');
   const errorBox = document.getElementById('loginError');
-  const username = form.elements.username.value.trim();
-  const password = form.elements.password.value;
-
-  if (!username || !password) {
-    showFormError(errorBox, 'Vui lòng nhập tên đăng nhập và mật khẩu.');
-    return;
-  }
-
   showFormError(errorBox, '');
-  setButtonBusy(button, true);
+  setButtonBusy(button, true, 'Đang chờ MetaMask...');
   try {
-    const result = await apiPost('/auth/login', { username, password });
-    saveSession(result);
-    location.href = nextPage();
+    await signInWithWallet();
+    location.href = await destinationAfterLogin();
   } catch (error) {
     showFormError(errorBox, error.message);
   } finally {
@@ -35,54 +33,32 @@ async function submitLogin(event) {
   }
 }
 
-// Hiện / ẩn mật khẩu đang gõ
-function togglePassword() {
-  const input = document.getElementById('password');
-  const showing = input.type === 'text';
-  input.type = showing ? 'password' : 'text';
-  this.innerHTML = showing ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
-}
-
-// =============================================================
-// TÀI KHOẢN DEMO: gắn 5 tên đăng nhập với Account 0–4 của Ganache
-// để buổi demo không phải đăng ký từng người. Chỉ dùng khi giả lập.
-// =============================================================
-const DEMO_USERS = [
-  { username: 'admin', displayName: 'Quản trị viên', index: 0 },
-  { username: 'nhasanxuat', displayName: 'Công ty Trà Thái Nguyên', index: 1 },
-  { username: 'vanchuyen', displayName: 'Giao Hàng Nhanh', index: 2 },
-  { username: 'nhaphanphoi', displayName: 'NPP Miền Bắc', index: 3 },
-  { username: 'banle', displayName: 'Siêu thị ABC', index: 4 },
-];
-
-async function createDemoUsers() {
-  const button = this;
-  setButtonBusy(button, true);
-  let created = 0;
+// Hiện tên mạng thật lấy từ backend (Sepolia, hoặc Ganache Local khi chạy thử)
+async function showNetworkName() {
   try {
-    const accounts = await apiGet('/accounts');
-    for (const demo of DEMO_USERS) {
-      const account = accounts.find(item => item.index === demo.index);
-      if (!account || account.hasLogin) continue; // ví đã có tài khoản thì bỏ qua
-      await apiPost('/auth/register', { ...demo, address: account.address, password: '123456' });
-      created++;
-    }
-    showToast(created ? 'Đã tạo ' + created + ' tài khoản demo.' : 'Tài khoản demo đã có sẵn.', 'success');
+    const config = await getChainConfig();
+    document.getElementById('networkName').textContent = config.chainName;
   } catch (error) {
-    showToast(error.message);
-  } finally {
-    setButtonBusy(button, false);
+    showFormError(document.getElementById('loginError'), error.message);
   }
 }
 
 // =============================================================
-// KHỞI ĐỘNG: đã đăng nhập rồi thì vào thẳng trang chính
+// KHỞI ĐỘNG: đã đăng nhập (token còn hạn) thì vào thẳng
 // =============================================================
-if (getSession()) {
-  location.replace(nextPage());
-}
-document.getElementById('registerLink').href = 'register.html' + location.search;
-document.getElementById('loginForm').addEventListener('submit', submitLogin);
-document.getElementById('togglePassword').addEventListener('click', togglePassword);
-document.getElementById('demoBox').classList.toggle('d-none', !CONFIG.AUTH_MOCK);
-document.getElementById('createDemoButton').addEventListener('click', createDemoUsers);
+(async function start() {
+  const params = new URLSearchParams(location.search);
+  document.getElementById('changedAlert').classList.toggle('d-none', !params.get('changed'));
+  document.getElementById('noWallet').classList.toggle('d-none', hasWallet());
+  document.getElementById('loginButton').disabled = !hasWallet();
+  document.getElementById('loginButton').addEventListener('click', login);
+  showNetworkName();
+
+  if (getSession()) {
+    try {
+      location.replace(await destinationAfterLogin());
+    } catch (error) {
+      clearSession(); // token hết hạn -> ở lại trang đăng nhập
+    }
+  }
+})();

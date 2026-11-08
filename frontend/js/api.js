@@ -1,19 +1,25 @@
 // =============================================================
-// API HELPER: mọi trang đọc / ghi dữ liệu qua apiGet và apiPost.
-// Trang không cần biết dữ liệu đến từ backend thật, file mock
-// hay bộ đăng nhập giả lập — chỉ cần đổi cờ trong config.js.
+// API HELPER: mọi trang đọc / ghi dữ liệu backend qua apiGet, apiPost, apiPut.
+// Tự gắn header "Authorization: Bearer <token>" khi đã đăng nhập bằng ví.
+// Giao dịch blockchain KHÔNG đi qua đây mà do người dùng ký trong MetaMask (wallet.js).
 // =============================================================
 
-// Bảng ánh xạ GET -> file mock (theo LO_TRINH_FRONTEND, mục 2)
+// Bảng ánh xạ GET -> file mock (chế độ USE_MOCK)
 const MOCK_FILES = {
   '/accounts': 'accounts.json',
   '/participants': 'participants.json',
   '/products': 'products.json',
   '/events': 'events.json',
+  '/config': 'config.json',
+  '/businesses': 'businesses.json',
+  '/auth/me': 'auth-me.json',
+  '/applications/me': 'application.json',
+  '/applications': 'applications.json',
 };
 
 // =============================================================
 // 1. GỬI REQUEST: đổi mọi kiểu lỗi thành Error có câu tiếng Việt
+// error.status = mã HTTP (401 = phiên hết hạn) để trang xử lý riêng
 // =============================================================
 async function requestJson(url, options) {
   let response;
@@ -30,41 +36,46 @@ async function requestJson(url, options) {
     throw new Error('Máy chủ trả về dữ liệu không hợp lệ.');
   }
 
-  // Backend trả lỗi dạng { success: false, message } (ví dụ "Sai vai tro")
-  if (!response.ok || data.success === false) {
-    throw new Error(data.message || 'Yêu cầu thất bại.');
+  // Backend trả lỗi dạng { success: false, message }
+  if (!response.ok || (data && data.success === false)) {
+    const error = new Error((data && data.message) || 'Yêu cầu thất bại.');
+    error.status = response.status;
+    throw error;
   }
   return data;
+}
+
+// Header chung: JSON + token phiên (nếu có)
+function authHeaders() {
+  const headers = { 'Content-Type': 'application/json' };
+  const session = getStoredSession();
+  if (session && session.token) headers.Authorization = 'Bearer ' + session.token;
+  return headers;
+}
+
+// Đọc phiên trực tiếp từ localStorage (common.js nạp sau file này)
+function getStoredSession() {
+  try {
+    return JSON.parse(localStorage.getItem('session'));
+  } catch (error) {
+    return null;
+  }
 }
 
 // =============================================================
 // 2. ĐỌC DỮ LIỆU
 // =============================================================
 async function apiGet(url) {
-  let data;
-  if (!CONFIG.USE_MOCK) {
-    data = await requestJson(CONFIG.API_BASE + url);
-  } else {
-    data = await mockGet(url);
-  }
-
-  // Đánh dấu ví nào đã có tài khoản đăng nhập (trang Đăng ký cần biết)
-  if (url === '/accounts' && CONFIG.AUTH_MOCK) {
-    data = markAccountsWithLogin(data);
-  }
-  return data;
+  if (CONFIG.USE_MOCK) return mockGet(url);
+  return requestJson(CONFIG.API_BASE + url, { headers: authHeaders() });
 }
 
 async function mockGet(url) {
   const path = url.split('?')[0];
-
-  // Mọi mã sản phẩm đều dùng product-1.json (theo bảng ánh xạ)
-  if (/^\/products\/\d+$/.test(path)) {
-    return requestJson(CONFIG.MOCK_BASE + '/product-1.json');
-  }
-  if (!MOCK_FILES[path]) {
-    throw new Error('Chưa có dữ liệu mẫu cho ' + path);
-  }
+  // Mọi mã sản phẩm / mọi doanh nghiệp đều dùng một file mẫu
+  if (/^\/products\/\d+$/.test(path)) return requestJson(CONFIG.MOCK_BASE + '/product-1.json');
+  if (/^\/businesses\/0x[0-9a-fA-F]{40}$/.test(path)) return requestJson(CONFIG.MOCK_BASE + '/business-detail.json');
+  if (!MOCK_FILES[path]) throw new Error('Chưa có dữ liệu mẫu cho ' + path);
   return requestJson(CONFIG.MOCK_BASE + '/' + MOCK_FILES[path]);
 }
 
@@ -75,107 +86,21 @@ function qrCodeUrl(productId) {
 }
 
 // =============================================================
-// 3. GHI DỮ LIỆU: tự gắn "from" = ví của người đang đăng nhập
+// 3. GHI DỮ LIỆU NGOÀI CHUỖI (hồ sơ, đăng nhập) — không tốn gas
 // =============================================================
-async function apiPost(url, body = {}) {
-  if (url.startsWith('/auth/') && CONFIG.AUTH_MOCK) {
-    return mockAuth(url, body);
+async function apiSend(method, url, body = {}) {
+  if (CONFIG.USE_MOCK) {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    const file = CONFIG.MOCK_FAIL ? 'error.json' : (url.startsWith('/applications') ? 'application.json' : 'tx-success.json');
+    return requestJson(CONFIG.MOCK_BASE + '/' + file);
   }
-
-  const payload = { ...body, from: localStorage.getItem('currentAccount') };
-  if (!CONFIG.USE_MOCK) {
-    return requestJson(CONFIG.API_BASE + url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-  }
-
-  // Chế độ mock: giả lập thời gian đào khối rồi trả kết quả mẫu
-  await new Promise(resolve => setTimeout(resolve, 800));
-  const file = CONFIG.MOCK_FAIL ? 'error.json' : 'tx-success.json';
-  return requestJson(CONFIG.MOCK_BASE + '/' + file);
+  return requestJson(CONFIG.API_BASE + url, { method, headers: authHeaders(), body: JSON.stringify(body) });
 }
 
-// =============================================================
-// 4. ĐĂNG NHẬP GIẢ LẬP (khi CONFIG.AUTH_MOCK = true)
-// API_SPEC v1 chưa có /auth nên tạm lưu tài khoản trong localStorage
-// của trình duyệt này; mật khẩu chỉ lưu dạng băm SHA-256.
-// Request/response giữ đúng hình dạng đã đề xuất cho Backend:
-//   POST /auth/register { username, password, displayName, address }
-//   POST /auth/login    { username, password } -> { token, user }
-// =============================================================
-const AUTH_USERS_KEY = 'authUsers';
-
-function loadAuthUsers() {
-  try {
-    return JSON.parse(localStorage.getItem(AUTH_USERS_KEY)) || [];
-  } catch (error) {
-    return [];
-  }
+function apiPost(url, body) {
+  return apiSend('POST', url, body);
 }
 
-function markAccountsWithLogin(accounts) {
-  const users = loadAuthUsers();
-  return accounts.map(account => ({
-    ...account,
-    hasLogin: users.some(user => sameAddress(user.address, account.address)),
-  }));
-}
-
-function sameAddress(a, b) {
-  return String(a).toLowerCase() === String(b).toLowerCase();
-}
-
-async function hashPassword(username, password) {
-  if (!window.crypto || !crypto.subtle) {
-    throw new Error('Trình duyệt chặn mã hoá. Hãy mở trang qua localhost hoặc 127.0.0.1.');
-  }
-  const bytes = new TextEncoder().encode(username + ':' + password);
-  const digest = await crypto.subtle.digest('SHA-256', bytes);
-  return Array.from(new Uint8Array(digest))
-    .map(byte => byte.toString(16).padStart(2, '0'))
-    .join('');
-}
-
-function publicUser(user) {
-  return { username: user.username, displayName: user.displayName, address: user.address };
-}
-
-async function mockAuth(url, body) {
-  await new Promise(resolve => setTimeout(resolve, 300));
-  if (url === '/auth/register') return mockRegister(body);
-  if (url === '/auth/login') return mockLogin(body);
-  throw new Error('Không hỗ trợ ' + url);
-}
-
-async function mockRegister(body) {
-  const users = loadAuthUsers();
-  const username = String(body.username || '').trim().toLowerCase();
-  if (users.some(user => user.username === username)) {
-    throw new Error('Tên đăng nhập đã tồn tại');
-  }
-  if (users.some(user => sameAddress(user.address, body.address))) {
-    throw new Error('Ví này đã gắn với một tài khoản khác');
-  }
-
-  const user = {
-    username,
-    displayName: String(body.displayName || '').trim(),
-    address: body.address,
-    passwordHash: await hashPassword(username, String(body.password || '')),
-  };
-  users.push(user);
-  localStorage.setItem(AUTH_USERS_KEY, JSON.stringify(users));
-  return { success: true, user: publicUser(user) };
-}
-
-async function mockLogin(body) {
-  const username = String(body.username || '').trim().toLowerCase();
-  const user = loadAuthUsers().find(item => item.username === username);
-  const hash = await hashPassword(username, String(body.password || ''));
-  if (!user || user.passwordHash !== hash) {
-    throw new Error('Sai tên đăng nhập hoặc mật khẩu');
-  }
-  return { success: true, token: 'mock-' + Date.now(), user: publicUser(user) };
+function apiPut(url, body) {
+  return apiSend('PUT', url, body);
 }

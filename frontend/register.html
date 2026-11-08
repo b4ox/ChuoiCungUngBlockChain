@@ -3,66 +3,115 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Đăng ký | TraceChain</title>
+  <title>Hồ sơ doanh nghiệp | TraceChain</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <link href="css/style.css" rel="stylesheet">
 </head>
-<body class="auth-page d-flex align-items-center py-4">
-  <main class="container d-flex flex-column align-items-center">
-    <a class="auth-brand mb-3" href="trace.html"><i class="bi bi-boxes me-2"></i>TraceChain</a>
+<body>
+  <div id="appNav"></div>
 
-    <div class="card auth-card shadow">
-      <div class="card-body p-4">
-        <h1 class="h4 fw-bold mb-1">Tạo tài khoản</h1>
-        <p class="text-body-secondary small mb-4">
-          Mỗi tài khoản gắn với một ví Ganache. Vai trò (sản xuất, vận chuyển…) do quản trị viên cấp trên blockchain.
-        </p>
+  <main class="container py-4" style="max-width: 880px">
+    <h1 class="h3 page-title">Đăng ký doanh nghiệp</h1>
+    <p class="text-body-secondary">
+      Doanh nghiệp đăng ký bằng ví MetaMask của mình. Gửi hồ sơ không tốn phí.
+      Chức năng của vai trò (tạo sản phẩm, nhận hàng…) mở sau khi quản trị viên duyệt và ghi vai trò lên blockchain.
+    </p>
 
-        <form id="registerForm" novalidate>
-          <div class="mb-3">
-            <label class="form-label" for="displayName">Tên hiển thị</label>
-            <input class="form-control" id="displayName" name="displayName" maxlength="60" placeholder="Ví dụ: Công ty Trà Thái Nguyên" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label" for="username">Tên đăng nhập</label>
-            <input class="form-control" id="username" name="username" maxlength="20" autocomplete="username" required>
-            <div class="form-text">3–20 ký tự: chữ thường không dấu, số hoặc dấu gạch dưới.</div>
-          </div>
-          <div class="row g-3 mb-3">
-            <div class="col-sm-6">
-              <label class="form-label" for="password">Mật khẩu</label>
-              <input class="form-control" id="password" name="password" type="password" autocomplete="new-password" required>
-            </div>
-            <div class="col-sm-6">
-              <label class="form-label" for="confirmPassword">Nhập lại</label>
-              <input class="form-control" id="confirmPassword" name="confirmPassword" type="password" autocomplete="new-password" required>
-            </div>
-            <div class="col-12 form-text mt-1">Tối thiểu 6 ký tự.</div>
-          </div>
-          <div class="mb-3">
-            <label class="form-label" for="address">Ví Ganache</label>
-            <select class="form-select" id="address" name="address" required>
-              <option value="">Đang tải danh sách ví...</option>
-            </select>
-          </div>
-          <div class="alert alert-danger py-2 small d-none" id="registerError" role="alert"></div>
-          <button class="btn btn-primary w-100" type="submit">
-            <i class="bi bi-person-plus me-1"></i>Đăng ký
-          </button>
-        </form>
+    <!-- ===== THANH 4 BƯỚC ===== -->
+    <ol class="reg-steps mb-4" id="regSteps">
+      <li><span class="reg-n">1</span>Xác minh ví</li>
+      <li><span class="reg-n">2</span>Gửi hồ sơ</li>
+      <li><span class="reg-n">3</span>Chờ duyệt</li>
+      <li><span class="reg-n">4</span>Hoạt động</li>
+    </ol>
 
-        <p class="text-center small mt-3 mb-0">
-          Đã có tài khoản? <a href="login.html" id="loginLink">Đăng nhập</a>
-        </p>
+    <!-- ===== BƯỚC 1: CHƯA ĐĂNG NHẬP ===== -->
+    <div class="card d-none" id="guestBox"><div class="card-body">
+      <h2 class="h5 fw-semibold">Kết nối và xác minh ví</h2>
+      <p class="mb-2">TraceChain không giữ ví hay khoá riêng của bạn. MetaMask sẽ hiện một thông điệp để ký:
+        ký <b>không tạo giao dịch, không tốn phí</b>, chỉ để chứng minh bạn là chủ ví.</p>
+      <p class="small text-body-secondary">Chưa có ví? Cài <a href="https://metamask.io/download/" target="_blank" rel="noopener">MetaMask</a>,
+        tạo ví, bật <em>Show test networks</em> và chọn Sepolia. Phí gas cho các thao tác sau này trả bằng SepoliaETH miễn phí từ faucet.</p>
+      <div class="alert alert-danger py-2 small d-none" id="guestError" role="alert"></div>
+      <button class="btn btn-primary" type="button" id="signInButton"><i class="bi bi-wallet2 me-1"></i>Kết nối MetaMask và ký</button>
+    </div></div>
+
+    <!-- ===== TRẠNG THÁI HỒ SƠ (JS điền) ===== -->
+    <div id="statusBox"></div>
+
+    <!-- ===== FORM HỒ SƠ ===== -->
+    <form class="card d-none" id="appForm" novalidate>
+      <div class="card-header bg-body d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <span class="fw-semibold" id="formTitle">Hồ sơ doanh nghiệp</span>
+        <span class="small text-body-secondary">Ví: <span class="font-monospace" id="formWallet"></span></span>
       </div>
-    </div>
+      <div class="card-body">
+        <p class="small text-body-secondary">
+          Mục <span class="badge vis-public">Công khai</span> hiện trên trang Doanh nghiệp sau khi được duyệt.
+          Mục <span class="badge vis-private">Chỉ quản trị viên</span> không bao giờ công khai và không ghi lên blockchain.
+        </p>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label" for="company">Tên doanh nghiệp <span class="badge vis-public">Công khai</span></label>
+            <input class="form-control" id="company" name="company" maxlength="80" autocomplete="organization" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="taxCode">Mã số thuế <span class="badge vis-public">Công khai</span></label>
+            <input class="form-control" id="taxCode" name="taxCode" maxlength="14" inputmode="numeric" placeholder="0101234567" required>
+            <div class="form-text">10 chữ số; chi nhánh thêm -XXX (ví dụ 0101234567-001).</div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="hq">Địa chỉ trụ sở <span class="badge vis-public">Công khai</span></label>
+            <input class="form-control" id="hq" name="hq" maxlength="150" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="website">Website <span class="badge vis-public">Công khai</span></label>
+            <input class="form-control" id="website" name="website" maxlength="120" type="url" placeholder="https://">
+            <div class="form-text">Không bắt buộc.</div>
+          </div>
+          <div class="col-12">
+            <label class="form-label" for="intro">Giới thiệu ngắn <span class="badge vis-public">Công khai</span></label>
+            <textarea class="form-control" id="intro" name="intro" rows="2" maxlength="300"></textarea>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" for="rep">Người đại diện <span class="badge vis-private">Chỉ quản trị viên</span></label>
+            <input class="form-control" id="rep" name="rep" maxlength="60" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" for="phone">Số điện thoại <span class="badge vis-private">Chỉ quản trị viên</span></label>
+            <input class="form-control" id="phone" name="phone" maxlength="10" inputmode="tel" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" for="email">Email <span class="badge vis-private">Chỉ quản trị viên</span></label>
+            <input class="form-control" id="email" name="email" maxlength="100" type="email" autocomplete="email" required>
+          </div>
+          <div class="col-12">
+            <span class="form-label d-block">Vai trò muốn được cấp <span class="badge vis-public">Công khai</span></span>
+            <div class="row g-2" id="roleOptions"></div>
+          </div>
+          <div class="col-12" id="agreeRow">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="agree">
+              <label class="form-check-label small" for="agree">Tôi xác nhận thông tin trên là chính xác và ví này thuộc doanh nghiệp.</label>
+            </div>
+          </div>
+        </div>
+        <div class="alert alert-danger py-2 small d-none mt-3 mb-0" id="formError" role="alert"></div>
+      </div>
+      <div class="card-footer bg-body d-flex flex-wrap gap-2 justify-content-end">
+        <button class="btn btn-outline-secondary d-none" type="button" id="cancelEdit">Huỷ</button>
+        <button class="btn btn-primary" type="submit" id="submitButton">Gửi hồ sơ</button>
+      </div>
+    </form>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
   <script src="js/config.js"></script>
   <script src="js/api.js"></script>
   <script src="js/common.js"></script>
+  <script src="js/wallet.js"></script>
   <script src="js/register.js"></script>
 </body>
 </html>

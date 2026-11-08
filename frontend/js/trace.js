@@ -4,13 +4,19 @@
 // =============================================================
 const STEP_LABELS = ['Đã sản xuất', 'Đang tới NPP', 'Ở nhà phân phối', 'Đang tới cửa hàng', 'Ở cửa hàng', 'Đã bán'];
 
+// Tên thành viên có link sang hồ sơ công khai; địa chỉ lạ thì hiện rút gọn
+function actorLink(address, name) {
+  if (!name) return escapeHtml(shortAddress(address));
+  return `<a href="businesses.html?address=${encodeURIComponent(address)}">${escapeHtml(name)}</a>`;
+}
+
 function renderInfo(product) {
   document.getElementById('traceName').textContent = product.name;
   document.getElementById('traceStatus').innerHTML = statusBadge(product.status, product.statusText);
   document.getElementById('traceCode').textContent = '#' + product.id;
   document.getElementById('traceOrigin').textContent = product.origin;
-  document.getElementById('traceManufacturer').textContent = product.manufacturerName || shortAddress(product.manufacturer);
-  document.getElementById('traceOwner').textContent = product.currentOwnerName || shortAddress(product.currentOwner);
+  document.getElementById('traceManufacturer').innerHTML = actorLink(product.manufacturer, product.manufacturerName);
+  document.getElementById('traceOwner').innerHTML = actorLink(product.currentOwner, product.currentOwnerName);
   document.getElementById('traceDescription').textContent = product.description;
 }
 
@@ -31,8 +37,8 @@ function renderTimeline(history) {
       ${statusBadge(item.status, item.statusText)}
       <span class="small text-body-secondary"><i class="bi bi-clock me-1"></i>${formatTime(item.time)}</span>
     </div>
-    <div class="small"><i class="bi bi-person me-1"></i>${escapeHtml(item.actorName || shortAddress(item.actor))}</div>
-    <div class="small text-body-secondary"><i class="bi bi-chat-left-text me-1"></i>${escapeHtml(item.note || 'Không có ghi chú')}</div>
+    <div class="small"><i class="bi bi-person me-1"></i>${actorLink(item.actor, item.actorName)}</div>
+    <div class="small text-body-secondary"><i class="bi bi-chat-left-text me-1"></i>${escapeHtml(noteText(item.note) || 'Không có ghi chú')}</div>
   </li>`).join('');
 }
 

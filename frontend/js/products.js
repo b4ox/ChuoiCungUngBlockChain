@@ -42,7 +42,7 @@ async function loadProducts() {
 }
 
 // =============================================================
-// TẠO SẢN PHẨM: chỉ Nhà sản xuất; form giữ nguyên nội dung nếu lỗi
+// TẠO SẢN PHẨM: chỉ Nhà sản xuất đã duyệt; ký bằng MetaMask; form giữ nguyên nội dung nếu lỗi
 // =============================================================
 async function submitProduct(event) {
   event.preventDefault();
@@ -60,12 +60,16 @@ async function submitProduct(event) {
   }
 
   showFormError(errorBox, '');
-  setButtonBusy(button, true);
+  setButtonBusy(button, true, 'Xác nhận trong MetaMask...');
   try {
-    const result = await apiPost('/products', body);
+    // Ký createProduct bằng ví của nhà sản xuất; contract tự kiểm tra vai trò
+    const args = [body.name, body.origin, body.description];
+    const result = await sendContractTx('createProduct', args, () => setButtonBusy(button, true, 'Đang chờ vào khối...'));
+    const productId = productIdFromReceipt(result);
     form.reset();
     bootstrap.Modal.getOrCreateInstance('#productModal').hide();
-    showToast(transactionMessage(result), 'success');
+    showToast('Đã tạo sản phẩm #' + productId + '. ' + transactionMessage(result), 'success');
+    await refreshPublicData();
     await loadProducts();
   } catch (error) {
     showFormError(errorBox, error.message);
@@ -82,7 +86,9 @@ async function submitProduct(event) {
   if (!user) return;
 
   const isManufacturer = user.role === ROLE.MANUFACTURER;
+  const waitingManufacturer = user.pendingRole === ROLE.MANUFACTURER;
   document.getElementById('openProductForm').classList.toggle('d-none', !isManufacturer);
+  document.getElementById('lockedProductButton').classList.toggle('d-none', !waitingManufacturer);
 
   const filter = document.getElementById('statusFilter');
   const requested = new URLSearchParams(location.search).get('status');
