@@ -1,48 +1,72 @@
 // =============================================================
-// TIỆN ÍCH CHUNG cho mọi trang: phiên đăng nhập, thanh điều hướng,
+// TIỆN ÍCH CHUNG cho mọi trang: phiên đăng nhập bằng ví, thanh điều hướng,
 // toast, nút đang xử lý và các hàm định dạng dữ liệu.
-// Thứ tự nạp: config.js -> api.js -> common.js -> script của trang.
+// Thứ tự nạp: config.js -> api.js -> common.js -> (wallet.js) -> script của trang.
 // =============================================================
 
 // Vai trò trên contract (enum Role trong CONTRACT_INTERFACE)
 const ROLE = { NONE: 0, MANUFACTURER: 1, TRANSPORTER: 2, DISTRIBUTOR: 3, RETAILER: 4 };
+const ROLE_TEXT = ['Chưa đăng ký', 'Nhà sản xuất', 'Vận chuyển', 'Nhà phân phối', 'Nhà bán lẻ'];
 
 // =============================================================
-// 1. PHIÊN ĐĂNG NHẬP
-// Lưu trong localStorage để tải lại trang vẫn còn đăng nhập.
-// 'currentAccount' giữ địa chỉ ví để apiPost tự gắn "from".
+// 1. PHIÊN ĐĂNG NHẬP BẰNG VÍ
+// Lưu { token, address } trong localStorage để tải lại trang vẫn còn đăng nhập.
+// Token do backend cấp sau khi kiểm tra chữ ký MetaMask (POST /auth/login).
 // =============================================================
 const SESSION_KEY = 'session';
 
 function getSession() {
-  try {
-    return JSON.parse(localStorage.getItem(SESSION_KEY));
-  } catch (error) {
-    return null;
-  }
+  return getStoredSession();
 }
 
 function saveSession(loginResult) {
-  const session = { token: loginResult.token, user: loginResult.user };
+  const session = { token: loginResult.token, address: loginResult.address };
   localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-  localStorage.setItem('currentAccount', loginResult.user.address);
 }
 
-function logout() {
+function clearSession() {
   localStorage.removeItem(SESSION_KEY);
-  localStorage.removeItem('currentAccount');
+}
+
+async function logout() {
+  try {
+    await apiPost('/auth/logout');
+  } catch (error) {
+    // phiên đã hết hạn ở backend thì bỏ qua
+  }
+  clearSession();
   location.href = 'login.html';
 }
 
-// Ghép tài khoản đăng nhập với vai trò đang có trên blockchain
-async function loadCurrentUser(session) {
-  const accounts = await apiGet('/accounts');
-  const address = session.user.address.toLowerCase();
-  const account = accounts.find(item => item.address.toLowerCase() === address);
-  if (!account) {
-    return { ...session.user, role: ROLE.NONE, roleText: 'Ví không có trên Ganache', isAdmin: false };
-  }
-  return { ...session.user, role: account.role, roleText: account.roleText, isAdmin: account.isAdmin };
+// Hỏi backend: ví này là ai trên blockchain, hồ sơ đang ở trạng thái nào
+async function loadCurrentUser() {
+  const me = await apiGet('/auth/me');
+  const member = me.member;
+  const active = !!(member && member.isActive);
+  const app = me.application;
+  return {
+    address: me.address,
+    isAdmin: me.isAdmin,
+    member,
+    application: app,
+    isActive: active,
+    // Chỉ vai trò ĐANG HOẠT ĐỘNG trên chuỗi mới mở chức năng
+    role: active ? member.role : ROLE.NONE,
+    roleText: active ? member.roleText : ROLE_TEXT[0],
+    // Vai trò đang xin (hồ sơ chờ duyệt) để hiện chức năng bị khoá
+    pendingRole: !active && app && app.status === 'pending' ? app.role : ROLE.NONE,
+    displayName: (member && member.name) || (app && app.company) || (me.isAdmin ? 'Quản trị viên' : shortAddress(me.address)),
+  };
+}
+
+// Câu mô tả trạng thái tài khoản, dùng ở navbar và các trang
+function accountStatusText(user) {
+  if (user.isAdmin) return 'Quản trị viên';
+  if (user.isActive) return user.roleText;
+  if (user.member && !user.member.isActive) return 'Đã bị thu hồi vai trò';
+  if (user.application && user.application.status === 'pending') return 'Hồ sơ chờ duyệt';
+  if (user.application && user.application.status === 'rejected') return 'Hồ sơ bị từ chối';
+  return 'Chưa đăng ký doanh nghiệp';
 }
 
 // =============================================================
@@ -54,45 +78,68 @@ async function loadCurrentUser(session) {
 async function initPage(options = {}) {
   const session = getSession();
   if (options.requireLogin && !session) {
-    const next = currentPageName() + location.search;
-    location.replace('login.html?next=' + encodeURIComponent(next));
+    goToLogin();
     return null;
   }
 
   let user = null;
   if (session) {
     try {
-      user = await loadCurrentUser(session);
+      user = await loadCurrentUser();
     } catch (error) {
-      // Backend tắt: vẫn cho vào trang, chỉ chưa biết vai trò
-      user = { ...session.user, role: ROLE.NONE, roleText: 'Chưa xác định', isAdmin: false };
-      showToast(error.message);
+      if (error.status === 401) {
+        clearSession(); // token hết hạn hoặc backend vừa khởi động lại
+        if (options.requireLogin) { goToLogin(); return null; }
+      } else {
+        showToast(error.message);
+      }
     }
   }
   renderNavbar(user);
+  watchWalletAccount(user);
   return user;
+}
+
+function goToLogin() {
+  const next = currentPageName() + location.search;
+  location.replace('login.html?next=' + encodeURIComponent(next));
 }
 
 function currentPageName() {
   return location.pathname.split('/').pop() || 'index.html';
 }
 
+// Đổi tài khoản trong MetaMask -> phiên cũ không còn đúng người -> đăng nhập lại.
+// Đổi mạng -> tải lại trang cho chắc.
+function watchWalletAccount(user) {
+  if (!window.ethereum || !window.ethereum.on) return;
+  window.ethereum.on('accountsChanged', accounts => {
+    const now = (accounts[0] || '').toLowerCase();
+    if (user && now !== user.address.toLowerCase()) {
+      clearSession();
+      location.href = 'login.html?changed=1&next=' + encodeURIComponent(currentPageName() + location.search);
+    }
+  });
+  window.ethereum.on('chainChanged', () => location.reload());
+}
+
 // =============================================================
-// 3. THANH ĐIỀU HƯỚNG: sinh bằng JS để 7 trang luôn giống nhau.
-// Khách (chưa đăng nhập) chỉ thấy trang Tra cứu.
-// Trên điện thoại menu tự gập lại (navbar-expand-lg của Bootstrap).
+// 3. THANH ĐIỀU HƯỚNG: sinh bằng JS để mọi trang luôn giống nhau.
+// Khách chỉ thấy Tra cứu và Doanh nghiệp. Quản trị chỉ hiện cho ví admin.
 // =============================================================
 const NAV_LINKS = [
-  { href: 'index.html', icon: 'bi-grid-1x2', label: 'Tổng quan', needLogin: true },
-  { href: 'products.html', icon: 'bi-box-seam', label: 'Sản phẩm', needLogin: true },
-  { href: 'actions.html', icon: 'bi-arrow-left-right', label: 'Xử lý đơn', needLogin: true },
-  { href: 'trace.html', icon: 'bi-search', label: 'Tra cứu', needLogin: false },
-  { href: 'admin.html', icon: 'bi-people', label: 'Thành viên', needLogin: true },
+  { href: 'index.html', icon: 'bi-grid-1x2', label: 'Tổng quan', show: 'user' },
+  { href: 'products.html', icon: 'bi-box-seam', label: 'Sản phẩm', show: 'user' },
+  { href: 'actions.html', icon: 'bi-arrow-left-right', label: 'Xử lý đơn', show: 'user' },
+  { href: 'trace.html', icon: 'bi-search', label: 'Tra cứu', show: 'all' },
+  { href: 'businesses.html', icon: 'bi-buildings', label: 'Doanh nghiệp', show: 'all' },
+  { href: 'admin.html', icon: 'bi-shield-check', label: 'Quản trị', show: 'admin' },
 ];
 
 function navLinksHtml(user) {
   const current = currentPageName();
-  const links = NAV_LINKS.filter(link => user || !link.needLogin);
+  const links = NAV_LINKS.filter(link =>
+    link.show === 'all' || (link.show === 'user' && user) || (link.show === 'admin' && user && user.isAdmin));
   return links.map(link => {
     const active = link.href === current ? ' active" aria-current="page' : '';
     return `<li class="nav-item">
@@ -103,18 +150,19 @@ function navLinksHtml(user) {
 
 function userMenuHtml(user) {
   if (!user) {
-    return `<a class="btn btn-light btn-sm" href="login.html"><i class="bi bi-box-arrow-in-right me-1"></i>Đăng nhập</a>`;
+    return `<a class="btn btn-light btn-sm" href="login.html"><i class="bi bi-wallet2 me-1"></i>Đăng nhập bằng ví</a>`;
   }
   return `<div class="dropdown">
     <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-      <i class="bi bi-person-circle me-1"></i>${escapeHtml(user.displayName)}
+      <i class="bi bi-wallet2 me-1"></i>${escapeHtml(user.displayName)}
     </button>
     <ul class="dropdown-menu dropdown-menu-end">
       <li class="px-3 py-2 small">
-        <div class="fw-semibold">${escapeHtml(user.isAdmin ? 'Quản trị viên' : user.roleText)}</div>
-        <div class="text-body-secondary">@${escapeHtml(user.username)} · <span class="font-monospace">${shortAddress(user.address)}</span></div>
+        <div class="fw-semibold">${escapeHtml(accountStatusText(user))}</div>
+        <div class="text-body-secondary font-monospace">${shortAddress(user.address)}</div>
       </li>
       <li><hr class="dropdown-divider"></li>
+      <li><a class="dropdown-item" href="register.html"><i class="bi bi-file-earmark-person me-1"></i>Hồ sơ doanh nghiệp</a></li>
       <li><button class="dropdown-item" type="button" id="logoutButton"><i class="bi bi-box-arrow-right me-1"></i>Đăng xuất</button></li>
     </ul>
   </div>`;
@@ -163,18 +211,20 @@ function showToast(message, type = 'danger') {
     </div>`;
   container.appendChild(toast);
   toast.addEventListener('hidden.bs.toast', () => toast.remove());
-  new bootstrap.Toast(toast, { delay: 5000 }).show();
+  new bootstrap.Toast(toast, { delay: 6000 }).show();
 }
 
-// Khoá nút + spinner trong lúc chờ giao dịch; gọi lại với busy=false để mở
-function setButtonBusy(button, busy) {
+// Khoá nút + spinner trong lúc chờ; gọi lại với busy=false để mở.
+// label: chữ hiện khi đang chờ (vd "Xác nhận trong MetaMask...")
+function setButtonBusy(button, busy, label = 'Đang xử lý...') {
   if (busy) {
-    button.dataset.label = button.innerHTML;
+    if (!button.dataset.label) button.dataset.label = button.innerHTML;
     button.disabled = true;
-    button.innerHTML = '<span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>Đang xử lý...';
+    button.innerHTML = `<span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>${escapeHtml(label)}`;
   } else {
     button.disabled = false;
     button.innerHTML = button.dataset.label || button.innerHTML;
+    delete button.dataset.label;
   }
 }
 
@@ -184,9 +234,9 @@ function showFormError(box, message) {
   box.classList.toggle('d-none', !message);
 }
 
+// Câu báo thành công sau khi giao dịch vào khối
 function transactionMessage(result) {
-  if (CONFIG.USE_MOCK) return 'Giao dịch mẫu thành công (dữ liệu mẫu không thay đổi).';
-  return 'Thành công! Block #' + result.blockNumber + ' · tx ' + shortAddress(result.txHash);
+  return 'Đã ghi lên blockchain! Khối #' + result.blockNumber + ' · tx ' + shortAddress(result.txHash);
 }
 
 // =============================================================
@@ -202,10 +252,20 @@ function shortAddress(address) {
   return address ? address.slice(0, 6) + '…' + address.slice(-4) : '—';
 }
 
+function sameAddress(a, b) {
+  return String(a || '').toLowerCase() === String(b || '').toLowerCase();
+}
+
 function formatTime(value) {
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '—';
+  if (!value || Number.isNaN(date.getTime())) return '—';
   return date.toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' });
+}
+
+function formatDate(value) {
+  const date = new Date(value);
+  if (!value || Number.isNaN(date.getTime())) return '—';
+  return date.toLocaleDateString('vi-VN');
 }
 
 // Màu badge theo status 0–5: xám, vàng (đang chở), xanh dương (ở kho/cửa hàng), xanh lá (đã bán)
@@ -214,4 +274,9 @@ const STATUS_COLORS = ['secondary', 'warning', 'primary', 'warning', 'primary', 
 function statusBadge(status, text) {
   const color = STATUS_COLORS[status] || 'secondary';
   return `<span class="badge text-bg-${color}">${escapeHtml(text)}</span>`;
+}
+
+// Ghi chú tự động của contract viết không dấu -> hiển thị có dấu
+function noteText(note) {
+  return note === 'San pham duoc tao' ? 'Sản phẩm được tạo' : note;
 }

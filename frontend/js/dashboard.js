@@ -4,10 +4,29 @@
 // =============================================================
 
 function renderWelcome(user) {
-  const roleText = user.isAdmin ? 'Quản trị viên' : user.roleText;
-  document.getElementById('welcome').textContent = 'Xin chào, ' + user.displayName + ' · ' + roleText;
-  const waitingForRole = !user.isAdmin && user.role === ROLE.NONE;
-  document.getElementById('roleAlert').classList.toggle('d-none', !waitingForRole);
+  document.getElementById('welcome').textContent = 'Xin chào, ' + user.displayName + ' · ' + accountStatusText(user);
+  const alertBox = document.getElementById('roleAlert');
+  const message = roleAlertHtml(user);
+  alertBox.innerHTML = message;
+  alertBox.classList.toggle('d-none', !message);
+}
+
+// Ví đăng nhập được nhưng chưa dùng được chức năng nào -> nói rõ vì sao và làm gì tiếp
+function roleAlertHtml(user) {
+  if (user.isAdmin || user.isActive) return '';
+  const app = user.application;
+  if (user.member && !user.member.isActive) {
+    return '<i class="bi bi-slash-circle me-1"></i>Vai trò của ví này đã bị quản trị viên thu hồi.';
+  }
+  if (app && app.status === 'pending') {
+    return `<i class="bi bi-hourglass-split me-1"></i>Hồ sơ <b>${escapeHtml(app.id)}</b> đang chờ duyệt. Chức năng
+      ${escapeHtml(app.roleText)} sẽ mở khi quản trị viên ghi vai trò lên blockchain. <a href="register.html">Xem hồ sơ</a>`;
+  }
+  if (app && app.status === 'rejected') {
+    return `<i class="bi bi-x-circle me-1"></i>Hồ sơ ${escapeHtml(app.id)} bị từ chối: ${escapeHtml(app.reason)}.
+      <a href="register.html">Sửa và gửi lại</a>`;
+  }
+  return '<i class="bi bi-file-earmark-plus me-1"></i>Ví này chưa đăng ký doanh nghiệp. <a href="register.html">Gửi hồ sơ</a> để được cấp vai trò.';
 }
 
 function renderStats(products, participants) {
