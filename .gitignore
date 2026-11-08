@@ -7,3 +7,6 @@ Thumbs.db
 !.vscode/extensions.json
 .deps/
 artifacts/
+
+# Dữ liệu ngoài chuỗi của backend (hồ sơ doanh nghiệp), mỗi máy một bản
+backend/data/

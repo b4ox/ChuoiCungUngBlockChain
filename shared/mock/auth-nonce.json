@@ -1,0 +1,5 @@
+{
+  "address": "0x5C9a2E7b4F1d8A3c6E0b9D2f5A8c1E4b7D0a3F6c",
+  "nonce": "3f8a1c9e2b7d4a6f0e5c8b1a9d2f7e4c",
+  "message": "localhost:3000 muốn bạn đăng nhập TraceChain bằng ví:\n0x5C9a2E7b4F1d8A3c6E0b9D2f5A8c1E4b7D0a3F6c\n\nKý thông điệp này để chứng minh bạn giữ ví. Không tạo giao dịch, không tốn phí.\n\nURI: http://localhost:3000\nChain ID: 11155111\nNonce: 3f8a1c9e2b7d4a6f0e5c8b1a9d2f7e4c\nIssued At: 2026-11-06T02:00:00.000Z"
+}

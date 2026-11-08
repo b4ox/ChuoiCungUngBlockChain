@@ -1,0 +1,74 @@
+[
+  {
+    "address": "0xFFcf8FDEE72ac11b5c542428B35EEF5769C409f0",
+    "name": "Công ty Trà Thái Nguyên",
+    "role": 1,
+    "roleText": "Nhà sản xuất",
+    "isActive": true,
+    "taxCode": "4600123456",
+    "hq": "Xã Tân Cương, TP. Thái Nguyên",
+    "website": "https://trathainguyen.vn",
+    "intro": "Trồng và chế biến chè xanh vùng Tân Cương.",
+    "approvedAt": "2026-10-18T03:00:00.000Z",
+    "txHash": "0x4444444444444444444444444444444444444444444444444444444444444444",
+    "stats": {
+      "steps": 2,
+      "productsCreated": 3,
+      "lastActivity": "2026-10-25T03:15:00.000Z"
+    }
+  },
+  {
+    "address": "0x22d491Bde2303f2f43325b2108D26f1eAbA1e32b",
+    "name": "Giao Hàng Nhanh",
+    "role": 2,
+    "roleText": "Vận chuyển",
+    "isActive": true,
+    "taxCode": "",
+    "hq": "",
+    "website": "",
+    "intro": "",
+    "approvedAt": null,
+    "txHash": "",
+    "stats": {
+      "steps": 2,
+      "productsCreated": 0,
+      "lastActivity": "2026-10-24T01:45:00.000Z"
+    }
+  },
+  {
+    "address": "0xE11BA2b4D45Eaed5996Cd0823791E0C93114882d",
+    "name": "NPP Miền Bắc",
+    "role": 3,
+    "roleText": "Nhà phân phối",
+    "isActive": true,
+    "taxCode": "",
+    "hq": "",
+    "website": "",
+    "intro": "",
+    "approvedAt": null,
+    "txHash": "",
+    "stats": {
+      "steps": 2,
+      "productsCreated": 0,
+      "lastActivity": "2026-10-23T04:00:00.000Z"
+    }
+  },
+  {
+    "address": "0xd03ea8624C8C5987235048901fB614fDcA89b117",
+    "name": "Siêu thị ABC",
+    "role": 4,
+    "roleText": "Nhà bán lẻ",
+    "isActive": true,
+    "taxCode": "",
+    "hq": "",
+    "website": "",
+    "intro": "",
+    "approvedAt": null,
+    "txHash": "",
+    "stats": {
+      "steps": 2,
+      "productsCreated": 0,
+      "lastActivity": "2026-10-26T11:20:00.000Z"
+    }
+  }
+]

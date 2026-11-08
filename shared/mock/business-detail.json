@@ -1,0 +1,56 @@
+{
+  "address": "0xFFcf8FDEE72ac11b5c542428B35EEF5769C409f0",
+  "name": "Công ty Trà Thái Nguyên",
+  "role": 1,
+  "roleText": "Nhà sản xuất",
+  "isActive": true,
+  "taxCode": "4600123456",
+  "hq": "Xã Tân Cương, TP. Thái Nguyên",
+  "website": "https://trathainguyen.vn",
+  "intro": "Trồng và chế biến chè xanh vùng Tân Cương.",
+  "approvedAt": "2026-10-18T03:00:00.000Z",
+  "txHash": "0x4444444444444444444444444444444444444444444444444444444444444444",
+  "stats": {
+    "steps": 2,
+    "productsCreated": 3,
+    "lastActivity": "2026-10-25T03:15:00.000Z"
+  },
+  "activity": [
+    {
+      "productId": 3,
+      "productName": "Gạo ST25 – Lô 15",
+      "status": 0,
+      "statusText": "Đã sản xuất",
+      "time": "2026-10-25T03:15:00.000Z",
+      "note": "San pham duoc tao"
+    },
+    {
+      "productId": 1,
+      "productName": "Trà xanh Thái Nguyên – Lô 01",
+      "status": 0,
+      "statusText": "Đã sản xuất",
+      "time": "2026-10-20T01:00:00.000Z",
+      "note": "San pham duoc tao"
+    }
+  ],
+  "products": [
+    {
+      "id": 1,
+      "name": "Trà xanh Thái Nguyên – Lô 01",
+      "status": 5,
+      "statusText": "Đã bán"
+    },
+    {
+      "id": 2,
+      "name": "Cà phê Robusta – Lô 07",
+      "status": 2,
+      "statusText": "Ở nhà phân phối"
+    },
+    {
+      "id": 3,
+      "name": "Gạo ST25 – Lô 15",
+      "status": 0,
+      "statusText": "Đã sản xuất"
+    }
+  ]
+}

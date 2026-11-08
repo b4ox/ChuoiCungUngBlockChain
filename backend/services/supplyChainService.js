@@ -2,10 +2,17 @@
 // SERVICE: gom MỌI lời gọi contract vào một chỗ.
 // Route chỉ gọi các hàm ở đây, không đụng trực tiếp tới contract.
 // =============================================================
-const { provider, readContract, getContract, CONTRACT_ADDRESS } = require('../config/blockchain');
+const {
+  provider, readContract, getContract, CONTRACT_ADDRESS, CONTRACT_READY, DEPLOY_BLOCK, GANACHE_CHAIN_ID, CHAIN_ID,
+} = require('../config/blockchain');
 const { getAddress } = require('ethers');
 const fmt = require('./format');
 const { httpError, requireAddress, requireText, parseId, parseRole } = require('../utils/validate');
+
+// Số khối tối đa mỗi lần hỏi event (RPC công khai của Sepolia giới hạn khoảng quét)
+const LOG_CHUNK_SIZE = Number(process.env.LOG_CHUNK_SIZE) || 5000;
+// Chưa ghi deployBlock thì chỉ quét chừng này khối gần nhất, tránh quét cả triệu khối
+const FALLBACK_SCAN_BLOCKS = 100000;
 
 // =============================================================
 // HÀM ĐỌC DÙNG CHUNG
@@ -22,8 +29,11 @@ async function getNameMap() {
   return names;
 }
 
-// Kiểm tra nhanh: Ganache có chạy không, contract đã deploy đúng địa chỉ chưa
+// Kiểm tra nhanh: blockchain có kết nối được không, contract đã deploy đúng địa chỉ chưa
 async function getHealth() {
+  if (!CONTRACT_READY) {
+    throw httpError(500, 'Chưa có địa chỉ contract. Deploy rồi điền "address" trong shared/contract/deployment.json');
+  }
   const network = await provider.getNetwork();
   const blockNumber = await provider.getBlockNumber();
   if ((await provider.getCode(CONTRACT_ADDRESS)) === '0x') {
@@ -32,14 +42,24 @@ async function getHealth() {
   return { ok: true, chainId: Number(network.chainId), blockNumber, contract: CONTRACT_ADDRESS };
 }
 
+// Ví quản trị = người đã deploy contract
+async function getOwner() {
+  return readContract.owner();
+}
+
 // =============================================================
 // TÀI KHOẢN VÀ THÀNH VIÊN
 // =============================================================
 
-// 10 tài khoản Ganache, kèm vai trò đã đăng ký trên contract
+// Tài khoản Ganache (chỉ có ở mạng local), kèm vai trò đã đăng ký trên contract.
+// Sepolia không có tài khoản mở khoá sẵn nên trả mảng rỗng.
 async function getAccounts() {
-  // Ganache trả địa chỉ viết thường -> đổi sang dạng checksum như mọi chỗ khác
-  const addresses = (await provider.send('eth_accounts', [])).map((a) => getAddress(a));
+  let addresses = [];
+  try {
+    addresses = (await provider.send('eth_accounts', [])).map((a) => getAddress(a));
+  } catch (err) {
+    return [];
+  }
   const owner = (await readContract.owner()).toLowerCase();
   const accounts = [];
   for (let i = 0; i < addresses.length; i++) {
@@ -59,6 +79,12 @@ async function getParticipants() {
     result.push(fmt.formatParticipant(address, await readContract.participants(address)));
   }
   return result;
+}
+
+// Thành viên của một địa chỉ; null nếu chưa từng được cấp vai trò
+async function getParticipant(address) {
+  const p = fmt.formatParticipant(getAddress(address), await readContract.participants(address));
+  return p.role === 0 ? null : p;
 }
 
 // =============================================================
@@ -90,26 +116,62 @@ async function getProductDetail(idParam) {
   };
 }
 
-// =============================================================
-// HOẠT ĐỘNG GẦN ĐÂY: đọc event StatusChanged, mới nhất trước
-// =============================================================
-async function getEvents(limit) {
-  const logs = await readContract.queryFilter('StatusChanged', 0, 'latest');
-  const latest = logs.reverse().slice(0, limit);
+// Mọi sản phẩm kèm lịch sử, dùng để thống kê hoạt động của từng doanh nghiệp
+async function getAllHistories() {
+  const count = Number(await readContract.productCount());
   const names = await getNameMap();
-  const blockTimes = {}; // nhiều event có thể chung một block
   const result = [];
-  for (const ev of latest) {
-    if (blockTimes[ev.blockNumber] === undefined) {
-      blockTimes[ev.blockNumber] = (await provider.getBlock(ev.blockNumber)).timestamp;
-    }
-    result.push(fmt.formatEvent(ev, names, blockTimes[ev.blockNumber]));
+  for (let id = 1; id <= count; id++) {
+    const product = fmt.formatProduct(await readContract.getProduct(id), names);
+    const history = (await readContract.getHistory(id)).map((h) => fmt.formatHistory(h, names));
+    result.push({ product, history });
   }
   return result;
 }
 
 // =============================================================
-// HÀM GHI: gửi giao dịch, chờ đào khối, trả kết quả
+// HOẠT ĐỘNG GẦN ĐÂY: đọc event StatusChanged, mới nhất trước.
+// Trên Sepolia không thể hỏi một lần từ khối 0, nên quét từng đoạn
+// LOG_CHUNK_SIZE khối và nhớ lại những gì đã quét (lần sau chỉ quét khối mới).
+// =============================================================
+const eventCache = { scannedTo: null, items: [], blockTimes: {} };
+
+function scanStartBlock(latest) {
+  if (DEPLOY_BLOCK > 0 || CHAIN_ID === GANACHE_CHAIN_ID) return DEPLOY_BLOCK;
+  return Math.max(0, latest - FALLBACK_SCAN_BLOCKS);
+}
+
+async function blockTime(blockNumber) {
+  if (eventCache.blockTimes[blockNumber] === undefined) {
+    eventCache.blockTimes[blockNumber] = (await provider.getBlock(blockNumber)).timestamp;
+  }
+  return eventCache.blockTimes[blockNumber];
+}
+
+async function scanNewEvents() {
+  const latest = await provider.getBlockNumber();
+  let from = eventCache.scannedTo === null ? scanStartBlock(latest) : eventCache.scannedTo + 1;
+  while (from <= latest) {
+    const to = Math.min(from + LOG_CHUNK_SIZE - 1, latest);
+    const logs = await readContract.queryFilter('StatusChanged', from, to);
+    for (const ev of logs) {
+      eventCache.items.push({ ev, seconds: await blockTime(ev.blockNumber) });
+    }
+    eventCache.scannedTo = to;
+    from = to + 1;
+  }
+}
+
+async function getEvents(limit) {
+  await scanNewEvents();
+  const names = await getNameMap(); // tên có thể đổi, nên ghép tên mỗi lần trả
+  const latest = eventCache.items.slice(-limit).reverse();
+  return latest.map((item) => fmt.formatEvent(item.ev, names, item.seconds));
+}
+
+// =============================================================
+// HÀM GHI (API v1, CHỈ CHẠY VỚI GANACHE LOCAL): backend tự ký bằng
+// tài khoản đã mở khoá. Trên Sepolia người dùng ký trong MetaMask.
 // =============================================================
 async function sendTx(from, method, args) {
   const contract = await getContract(requireAddress(from, 'from'));
@@ -158,6 +220,7 @@ async function sell(from, id, note) {
 }
 
 module.exports = {
-  getHealth, getAccounts, getParticipants, getProducts, getProductDetail, getEvents,
+  getHealth, getOwner, getAccounts, getParticipants, getParticipant,
+  getProducts, getProductDetail, getAllHistories, getEvents,
   registerParticipant, createProduct, pickUp, receive, sell,
 };

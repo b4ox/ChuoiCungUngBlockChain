@@ -103,3 +103,38 @@ Content-Type: application/json
 
 ### Sản phẩm không tồn tại -> "San pham khong ton tai"
 GET {{api}}/products/999
+
+### ===== v1.1: chuỗi, đăng nhập bằng ví, hồ sơ, doanh nghiệp =====
+
+### 13. Cấu hình chuỗi cho frontend (địa chỉ contract, ABI, mạng)
+GET {{api}}/config
+
+### 14. Xin thông điệp để ký (thay địa chỉ ví của bạn)
+GET {{api}}/auth/nonce?address=0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1
+
+### 15. Đăng nhập: signature = chữ ký MetaMask (personal_sign) của "message" ở bước 14
+POST {{api}}/auth/login
+Content-Type: application/json
+
+{ "address": "0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1", "signature": "0x..." }
+
+### 17. Ví đang đăng nhập (dán token từ bước 15)
+@token = dan-token-vao-day
+GET {{api}}/auth/me
+Authorization: Bearer {{token}}
+
+### 19. Gửi hồ sơ doanh nghiệp
+POST {{api}}/applications
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "company": "Công ty TNHH Mật ong Bạc Hà", "taxCode": "5300765432", "hq": "Thị trấn Bắc Hà, Lào Cai",
+  "website": "https://matongbacha.vn", "intro": "Mật ong hoa bạc hà", "rep": "Nguyễn Văn Hùng",
+  "email": "kinhdoanh@matongbacha.vn", "phone": "0987654321", "role": 1 }
+
+### 21. (Admin) Hồ sơ chờ duyệt
+GET {{api}}/applications?status=pending
+Authorization: Bearer {{token}}
+
+### 24. Doanh nghiệp công khai
+GET {{api}}/businesses

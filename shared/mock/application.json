@@ -1,0 +1,21 @@
+{
+  "id": "HS-0003",
+  "address": "0x5C9a2E7b4F1d8A3c6E0b9D2f5A8c1E4b7D0a3F6c",
+  "company": "Công ty TNHH Mật ong Bạc Hà",
+  "taxCode": "5300765432",
+  "hq": "Thị trấn Bắc Hà, Lào Cai",
+  "website": "https://matongbacha.vn",
+  "intro": "Nuôi ong và khai thác mật hoa bạc hà trên cao nguyên đá Bắc Hà.",
+  "rep": "Nguyễn Văn Hùng",
+  "email": "kinhdoanh@matongbacha.vn",
+  "phone": "0987654321",
+  "role": 1,
+  "roleText": "Nhà sản xuất",
+  "status": "pending",
+  "statusText": "Chờ duyệt",
+  "reason": "",
+  "txHash": "",
+  "submittedAt": "2026-11-06T02:05:00.000Z",
+  "updatedAt": "2026-11-06T02:05:00.000Z",
+  "decidedAt": null
+}

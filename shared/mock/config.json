@@ -1,0 +1,10 @@
+{
+  "chainId": 11155111,
+  "chainIdHex": "0xaa36a7",
+  "chainName": "Sepolia",
+  "rpcUrl": "",
+  "currencySymbol": "SepoliaETH",
+  "explorerUrl": "https://sepolia.etherscan.io",
+  "contract": "",
+  "abi": []
+}
