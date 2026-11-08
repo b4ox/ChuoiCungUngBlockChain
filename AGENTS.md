@@ -32,13 +32,13 @@ Dự án chia cho 3 người. Agent đang làm việc cho người sở hữu th
 | B | `b4ox` | Backend **+ Điều phối viên** (người duy nhất sửa thông tin chung) |
 | C | `vothinhungoc7980-coder` | Frontend |
 
-| Đường dẫn | Chủ sở hữu | Agent của Contract | Agent của Backend (b4ox) | Agent của Frontend |
+| Đường dẫn | Chủ sở hữu | Agent của Contract | Agent của b4ox (Backend + điều phối) | Agent của Frontend |
 | --- | --- | --- | --- | --- |
-| `contracts/**` | A | Sửa | Chỉ đọc | Chỉ đọc |
-| `shared/contract/**`, `shared/CONTRACT_INTERFACE.md` | A | Sửa | Chỉ đọc | Chỉ đọc |
+| `contracts/**` | A | Sửa | Sửa khi b4ox yêu cầu rõ | Chỉ đọc |
+| `shared/contract/**`, `shared/CONTRACT_INTERFACE.md` | A | Sửa | Sửa khi b4ox yêu cầu rõ | Chỉ đọc |
 | `backend/**`, `shared/API_SPEC.md`, `shared/mock/**` | B | Chỉ đọc | Sửa | Chỉ đọc |
-| `frontend/**` | C | Chỉ đọc | Chỉ đọc | Sửa |
-| **Thông tin chung:** mọi file ở thư mục gốc (`AGENTS.md`, `CLAUDE.md`, `README.md`, `package.json`, `.gitignore`...), `.github/**`, `docs/**`, `shared/README.md`, và `AGENTS.md`/`CLAUDE.md` ở MỌI thư mục | Điều phối viên `b4ox` | Không sửa | Chỉ sửa khi b4ox yêu cầu rõ | Không sửa |
+| `frontend/**` | C | Chỉ đọc | Sửa khi b4ox yêu cầu rõ | Sửa |
+| **Thông tin chung:** mọi file ở thư mục gốc (`AGENTS.md`, `CLAUDE.md`, `README.md`, `package.json`, `.gitignore`...), `.github/**`, `docs/**`, `shared/README.md`, và `AGENTS.md`/`CLAUDE.md` ở MỌI thư mục | Điều phối viên `b4ox` | Không sửa | Sửa | Không sửa |
 
 Quy tắc bắt buộc:
 
@@ -94,11 +94,14 @@ Luật thay đổi:
 | `frontend` | Mọi việc của vùng Frontend | `vothinhungoc7980-coder` |
 
 Không tạo nhánh nào khác. Mỗi người chỉ làm trên đúng nhánh của mình.
+Ngoại lệ: điều phối viên `b4ox` được commit và push lên MỌI nhánh (`contract`, `backend`, `frontend`, `dev`)
+để sửa lỗi, gỡ file sai vùng hoặc hỗ trợ thành viên. Khi sửa nhánh của người khác, b4ox báo chủ nhánh ngay sau khi push.
 
 Quy trình mỗi phiên làm việc:
 
-1. **Đầu phiên:** `git checkout <nhánh-của-mình>` → `git fetch origin` → `git merge origin/dev`
-   (GitHub Desktop: chọn nhánh → Fetch origin → Branch → Update from dev).
+1. **Đầu phiên:** `git checkout <nhánh-của-mình>` → `git pull` → `git merge origin/dev`
+   (GitHub Desktop: chọn nhánh → Fetch origin → Pull origin (nếu có) → Branch → Update from dev).
+   Bước `git pull` lấy về các sửa đổi b4ox có thể đã push lên nhánh của bạn.
 2. **Trong phiên:** commit nhỏ, thường xuyên, theo mẫu `feat(backend): them route products`, `fix(frontend): ...`, `docs(contract): ...`.
 3. **Cuối phiên:** commit hết → `git push` nhánh của mình (việc dở dang cũng push).
 4. **Xong một phần (1–2 ngày/lần):** mở Pull Request `<nhánh-của-mình>` → `dev`. Zone guard phải xanh, `b4ox` duyệt.
@@ -109,6 +112,8 @@ Quy tắc cho AI agent:
 - Đầu mỗi nhiệm vụ chạy `git branch --show-current`. Nhánh phải khớp vùng đang làm
   (`contracts/` ↔ `contract`, `backend/` ↔ `backend`, `frontend/` ↔ `frontend`).
   Nếu đang ở `master`, `dev` hoặc nhánh của người khác → **DỪNG**, báo người dùng chuyển nhánh, không sửa file.
+  Ngoại lệ: người dùng là `b4ox` và yêu cầu rõ việc sửa trên nhánh đó → được làm, nhưng vẫn KHÔNG
+  force push, KHÔNG rebase, KHÔNG push thẳng lên `master`.
 - Agent KHÔNG tự `git push`, KHÔNG tạo/xoá/đổi tên nhánh, KHÔNG `git push --force`, KHÔNG `rebase`, KHÔNG sửa lịch sử.
   Chỉ commit khi người dùng yêu cầu.
 - Trước khi commit: `git status` chỉ được chứa file trong vùng của mình.
