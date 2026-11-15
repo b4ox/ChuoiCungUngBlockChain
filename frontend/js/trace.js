@@ -42,6 +42,15 @@ function renderTimeline(history) {
   </li>`).join('');
 }
 
+// =============================================================
+// CÁC BÊN THAM GIA: ẩn khối khi contract chưa có lời mời.
+// =============================================================
+function renderInvitations(invitations) {
+  const list = Array.isArray(invitations) ? invitations : [];
+  document.getElementById('invitationSection').classList.toggle('d-none', list.length === 0);
+  document.getElementById('invitationBody').innerHTML = list.map(item => `<tr><td>${escapeHtml(item.taskText)}</td><td>${escapeHtml(item.inviteeName || (item.invitee ? shortAddress(item.invitee) : 'Chưa mời'))}</td><td>${escapeHtml(item.stateText)}</td></tr>`).join('');
+}
+
 function renderQr(productId) {
   const url = qrCodeUrl(productId);
   document.getElementById('qrImage').src = url;
@@ -63,6 +72,7 @@ async function findProduct(id) {
     renderInfo(data.product);
     renderSteps(data.product.status);
     renderTimeline(data.history || []);
+    renderInvitations(data.invitations);
     renderQr(data.product.id);
     result.classList.remove('d-none');
     state.textContent = '';

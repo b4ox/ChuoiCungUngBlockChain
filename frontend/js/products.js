@@ -3,6 +3,29 @@
 // để chế độ mock và backend thật cho kết quả giống nhau) + form tạo mới.
 // =============================================================
 let products = [];
+const EMPTY_ADDRESS = '0x0000000000000000000000000000000000000000';
+
+// =============================================================
+// ĐỐI TÁC: chỉ gợi ý doanh nghiệp đang hoạt động, đúng vai trò.
+// =============================================================
+function fillInviteOptions(id, participants, role) {
+  const select = document.getElementById(id);
+  const choices = participants.filter(item => item.role === role && item.isActive);
+  select.innerHTML = '<option value="">Không chọn</option>' + choices.map(item => `<option value="${escapeHtml(item.address)}">${escapeHtml(item.name)} · ${escapeHtml(shortAddress(item.address))}</option>`).join('');
+  select.disabled = false;
+}
+
+async function loadInviteOptions() {
+  const state = document.getElementById('inviteOptionsState');
+  try {
+    const [participants, config] = await Promise.all([apiGet('/participants'), getChainConfig()]);
+    const hasMethod = Array.isArray(config.abi) && config.abi.some(item => item.type === 'function' && item.name === 'createProductWithInvites');
+    if (!hasMethod) { state.textContent = 'Contract chưa hỗ trợ lời mời; bạn vẫn có thể tạo sản phẩm.'; return; }
+    fillInviteOptions('transporter', participants, ROLE.TRANSPORTER);
+    fillInviteOptions('distributor', participants, ROLE.DISTRIBUTOR);
+    state.textContent = 'Bạn có thể mời đối tác ngay hoặc thực hiện sau.';
+  } catch (error) { state.textContent = 'Không tải được danh sách đối tác; bạn vẫn có thể tạo sản phẩm.'; }
+}
 
 function matchesFilter(product, filter) {
   if (filter === '') return true;
@@ -62,9 +85,13 @@ async function submitProduct(event) {
   showFormError(errorBox, '');
   setButtonBusy(button, true, 'Xác nhận trong MetaMask...');
   try {
-    // Ký createProduct bằng ví của nhà sản xuất; contract tự kiểm tra vai trò
+    // Không gửi lời mời thì giữ nguyên luồng tạo sản phẩm v1.
     const args = [body.name, body.origin, body.description];
-    const result = await sendContractTx('createProduct', args, () => setButtonBusy(button, true, 'Đang chờ vào khối...'));
+    const transporter = form.elements.transporter.value;
+    const distributor = form.elements.distributor.value;
+    const method = transporter || distributor ? 'createProductWithInvites' : 'createProduct';
+    if (method === 'createProductWithInvites') args.push(transporter || EMPTY_ADDRESS, distributor || EMPTY_ADDRESS);
+    const result = await sendContractTx(method, args, () => setButtonBusy(button, true, 'Đang chờ vào khối...'));
     const productId = productIdFromReceipt(result);
     form.reset();
     bootstrap.Modal.getOrCreateInstance('#productModal').hide();
@@ -82,11 +109,10 @@ async function submitProduct(event) {
 // KHỞI ĐỘNG: bắt buộc đăng nhập; ?status= trên URL chọn sẵn bộ lọc
 // =============================================================
 (async function start() {
-  const user = await initPage({ requireLogin: true });
-  if (!user) return;
+  const user = await initPage({ requireLogin: false });
 
-  const isManufacturer = user.role === ROLE.MANUFACTURER;
-  const waitingManufacturer = user.pendingRole === ROLE.MANUFACTURER;
+  const isManufacturer = Boolean(user && user.role === ROLE.MANUFACTURER);
+  const waitingManufacturer = Boolean(user && user.pendingRole === ROLE.MANUFACTURER);
   document.getElementById('openProductForm').classList.toggle('d-none', !isManufacturer);
   document.getElementById('lockedProductButton').classList.toggle('d-none', !waitingManufacturer);
 
@@ -95,5 +121,6 @@ async function submitProduct(event) {
   if (requested && [...filter.options].some(option => option.value === requested)) filter.value = requested;
   filter.addEventListener('change', renderProducts);
   document.getElementById('productForm').addEventListener('submit', submitProduct);
+  if (isManufacturer) loadInviteOptions();
   loadProducts();
 })();
