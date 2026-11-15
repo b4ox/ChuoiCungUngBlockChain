@@ -10,6 +10,14 @@ contract SupplyChain {
     // Vai trò của thành viên. None = chưa đăng ký.
     enum Role { None, Manufacturer, Transporter, Distributor, Retailer }
 
+    // Thứ tự nhiệm vụ khớp với trạng thái mà nhiệm vụ cần xử lý.
+    enum Task { TransportToDistributor, Distribute, TransportToRetailer, Retail }
+
+    struct Invitation {
+        address invitee;
+        bool accepted;
+    }
+
     // Các trạng thái sản phẩm, chỉ đi một chiều từ 0 -> 5.
     enum Status {
         Manufactured,           // 0: vừa sản xuất
@@ -52,12 +60,16 @@ contract SupplyChain {
     address[] public participantList;                   // để liệt kê thành viên
     mapping(uint256 => Product) public products;
     mapping(uint256 => History[]) private histories;
+    mapping(uint256 => Invitation[4]) private invitations;
 
     // ===== 3. EVENTS =====
     event ParticipantRegistered(address indexed account, string name, Role role);
     event ProductCreated(uint256 indexed id, string name, address indexed manufacturer);
     event StatusChanged(uint256 indexed id, Status status, address indexed actor, string note);
     event ParticipantDeactivated(address indexed account);
+    event InvitationSent(uint256 indexed id, Task task, address indexed invitee, address indexed inviter);
+    event InvitationAccepted(uint256 indexed id, Task task, address indexed invitee);
+    event InvitationDeclined(uint256 indexed id, Task task, address indexed invitee);
 
     // ===== 4. MODIFIERS: kiểm tra điều kiện trước khi chạy hàm =====
     modifier onlyOwner() {
@@ -108,13 +120,44 @@ contract SupplyChain {
     function createProduct(string memory _name, string memory _origin, string memory _description)
         external onlyRole(Role.Manufacturer)
     {
-        productCount++;
-        products[productCount] = Product(
-            productCount, _name, _origin, _description,
-            msg.sender, msg.sender, Status.Manufactured, block.timestamp
-        );
-        _addHistory(productCount, Status.Manufactured, "San pham duoc tao");
-        emit ProductCreated(productCount, _name, msg.sender);
+        _createProduct(_name, _origin, _description);
+    }
+
+    // Nhà sản xuất tạo sản phẩm và có thể mời hai đối tác trong cùng giao dịch.
+    function createProductWithInvites(
+        string memory _name, string memory _origin, string memory _description,
+        address _transporter, address _distributor
+    ) external onlyRole(Role.Manufacturer) {
+        uint256 id = _createProduct(_name, _origin, _description);
+        if (_transporter != address(0)) _invite(id, Task.TransportToDistributor, _transporter);
+        if (_distributor != address(0)) _invite(id, Task.Distribute, _distributor);
+    }
+
+    // Nhà sản xuất hoặc NPP phụ trách mời đối tác cho nhiệm vụ chưa được nhận.
+    function inviteParticipant(uint256 _id, Task _task, address _invitee) external productExists(_id) {
+        _invite(_id, _task, _invitee);
+    }
+
+    // Chỉ ví được mời, còn hoạt động và đúng vai trò mới được chấp nhận.
+    function acceptInvitation(uint256 _id, Task _task) external productExists(_id) {
+        Invitation storage invitation = invitations[_id][uint256(_task)];
+        require(invitation.invitee == msg.sender, "Ban khong duoc moi");
+        require(uint8(products[_id].status) <= uint8(_task), "Nhiem vu da qua");
+        require(!invitation.accepted, "Da chap nhan roi");
+        Participant storage participant = participants[msg.sender];
+        require(participant.isActive, "Chua duoc dang ky");
+        require(participant.role == _taskRole(_task), "Doanh nghiep khong dung vai tro");
+        invitation.accepted = true;
+        emit InvitationAccepted(_id, _task, msg.sender);
+    }
+
+    // Từ chối lời mời đang chờ để người phụ trách có thể chọn đối tác khác.
+    function declineInvitation(uint256 _id, Task _task) external productExists(_id) {
+        Invitation storage invitation = invitations[_id][uint256(_task)];
+        require(invitation.invitee == msg.sender, "Ban khong duoc moi");
+        require(!invitation.accepted, "Da chap nhan roi");
+        delete invitations[_id][uint256(_task)];
+        emit InvitationDeclined(_id, _task, msg.sender);
     }
 
     // Bước 1 và 3: đơn vị vận chuyển nhận hàng đi giao
@@ -123,8 +166,12 @@ contract SupplyChain {
     {
         Product storage p = products[_id];
         if (p.status == Status.Manufactured) {
+            _requireAccepted(_id, Task.TransportToDistributor);
+            _requireReceiverReady(_id, Task.Distribute);
             p.status = Status.InTransitToDistributor;
         } else if (p.status == Status.AtDistributor) {
+            _requireAccepted(_id, Task.TransportToRetailer);
+            _requireReceiverReady(_id, Task.Retail);
             p.status = Status.InTransitToRetailer;
         } else {
             revert("Chua the van chuyen o trang thai nay");
@@ -142,8 +189,10 @@ contract SupplyChain {
         Product storage p = products[_id];
 
         if (me.role == Role.Distributor && p.status == Status.InTransitToDistributor) {
+            _requireAccepted(_id, Task.Distribute);
             p.status = Status.AtDistributor;
         } else if (me.role == Role.Retailer && p.status == Status.InTransitToRetailer) {
+            _requireAccepted(_id, Task.Retail);
             p.status = Status.AtRetailer;
         } else {
             revert("Sai vai tro hoac sai trang thai");
@@ -164,6 +213,11 @@ contract SupplyChain {
     }
 
     // ===== 7. HÀM ĐỌC (view, không tốn gas) =====
+    // Trả bốn ô lời mời theo thứ tự enum Task, kể cả các ô trống.
+    function getInvitations(uint256 _id) external view productExists(_id) returns (Invitation[4] memory) {
+        return invitations[_id];
+    }
+
     function getProduct(uint256 _id) external view productExists(_id) returns (Product memory) {
         return products[_id];
     }
@@ -177,6 +231,60 @@ contract SupplyChain {
     }
 
     // ===== 8. HÀM NỘI BỘ =====
+    function _createProduct(string memory _name, string memory _origin, string memory _description)
+        internal returns (uint256 id)
+    {
+        id = ++productCount;
+        products[id] = Product(
+            id, _name, _origin, _description,
+            msg.sender, msg.sender, Status.Manufactured, block.timestamp
+        );
+        _addHistory(id, Status.Manufactured, "San pham duoc tao");
+        emit ProductCreated(id, _name, msg.sender);
+    }
+
+    function _taskRole(Task _task) internal pure returns (Role) {
+        if (_task == Task.Distribute) return Role.Distributor;
+        if (_task == Task.Retail) return Role.Retailer;
+        return Role.Transporter;
+    }
+
+    // Chặng sau thuộc NPP đã nhận nhiệm vụ phân phối của chính sản phẩm này.
+    function _canInvite(uint256 _id, Task _task) internal view returns (bool) {
+        Participant storage participant = participants[msg.sender];
+        if (_task == Task.TransportToDistributor || _task == Task.Distribute) {
+            return participant.isActive && participant.role == Role.Manufacturer && products[_id].manufacturer == msg.sender;
+        }
+        Invitation storage distributor = invitations[_id][uint256(Task.Distribute)];
+        return participant.isActive && participant.role == Role.Distributor
+            && distributor.accepted && distributor.invitee == msg.sender;
+    }
+
+    function _invite(uint256 _id, Task _task, address _invitee) internal {
+        require(_canInvite(_id, _task), "Ban khong co quyen moi nhiem vu nay");
+        require(uint8(products[_id].status) <= uint8(_task), "Nhiem vu da qua");
+        Invitation storage invitation = invitations[_id][uint256(_task)];
+        require(!invitation.accepted, "Nhiem vu da co nguoi nhan");
+        Participant storage participant = participants[_invitee];
+        require(_invitee != address(0) && participant.isActive && participant.role == _taskRole(_task),
+            "Doanh nghiep khong dung vai tro");
+        invitation.invitee = _invitee;
+        emit InvitationSent(_id, _task, _invitee, msg.sender);
+    }
+
+    function _requireAccepted(uint256 _id, Task _task) internal view {
+        Invitation storage invitation = invitations[_id][uint256(_task)];
+        require(invitation.invitee == msg.sender && invitation.accepted, "Ban chua nhan loi moi cho nhiem vu nay");
+    }
+
+    // Bên nhận phải còn khả năng xác nhận khi hàng bắt đầu được giao.
+    function _requireReceiverReady(uint256 _id, Task _task) internal view {
+        Invitation storage invitation = invitations[_id][uint256(_task)];
+        Participant storage receiver = participants[invitation.invitee];
+        require(invitation.accepted && receiver.isActive && receiver.role == _taskRole(_task),
+            "Ben nhan chua chap nhan loi moi");
+    }
+
     // Ghi một bước vào lịch sử và phát event để bên ngoài theo dõi
     function _addHistory(uint256 _id, Status _status, string memory _note) internal {
         histories[_id].push(History(_status, msg.sender, block.timestamp, _note));

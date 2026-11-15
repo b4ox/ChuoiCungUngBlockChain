@@ -3,30 +3,17 @@ pragma solidity ^0.8.20;
 
 import "remix_tests.sol";
 import "../SupplyChain.sol";
+import "./helpers/JourneyFixture.sol";
 import "./helpers/NonAdminCaller.sol";
 
-contract SupplyChainTest {
+contract SupplyChainTest is JourneyFixture {
     SupplyChain private chain;
 
     // Kiểm tra luồng nghiệp vụ hoặc chuẩn bị dữ liệu độc lập.
     function beforeAll() public {
-        chain = new SupplyChain();
-
-        useRole(SupplyChain.Role.Manufacturer);
-        chain.createProduct("Lo ca phe test", "Dak Lak", "Du lieu test");
-
-        useRole(SupplyChain.Role.Transporter);
-        chain.pickUpProduct(1, "Lay tai xuong");
-
-        useRole(SupplyChain.Role.Distributor);
-        chain.receiveProduct(1, "Nhan tai kho");
-
-        useRole(SupplyChain.Role.Transporter);
-        chain.pickUpProduct(1, "Chuyen den cua hang");
-
-        useRole(SupplyChain.Role.Retailer);
-        chain.receiveProduct(1, "Cua hang nhan");
-        chain.markAsSold(1, "Da ban");
+        JourneyDistributor distributor;
+        (chain, distributor) = newProduct(true);
+        finishJourney(chain, distributor);
 
         // Người gọi phải đúng vai vận chuyển để kiểm tra lỗi trạng thái.
         useRole(SupplyChain.Role.Transporter);
