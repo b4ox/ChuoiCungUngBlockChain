@@ -1,4 +1,4 @@
-# API_SPEC.md — Backend REST API v1.1
+# API_SPEC.md — Backend REST API v1.2
 
 > Chủ sở hữu: **Backend (B)**. Trạng thái: **bản nháp v1** — B xác nhận và đóng băng tại mốc M1 (hết Ngày 2).
 > Frontend code theo file này và dùng `shared/mock/` khi chưa có backend. Mọi ví dụ response dưới đây = nội dung file mock tương ứng.
@@ -29,8 +29,8 @@ Base URL: `http://localhost:3000/api` (khi frontend được backend phục vụ
 | 3 | GET | `/participants` | — | `Participant[]` (đã đăng ký) | `participants.json` |
 | 4 | POST | `/participants` | `{ from, account, name, role }` | TxResult | `tx-success.json` |
 | 5 | GET | `/products` | query tuỳ chọn `?status=0..5` | `Product[]` (id tăng dần) | `products.json` |
-| 6 | GET | `/products/:id` | — | `{ product: Product, history: History[] }` | `product-1.json` |
-| 7 | POST | `/products` | `{ from, name, origin, description }` | TxResult + `productId` | `tx-success.json` |
+| 6 | GET | `/products/:id` | — | `{ product: Product, history: History[], invitations: Invitation[] }` (v1.2 thêm `invitations`) | `product-1.json` |
+| 7 | POST | `/products` | `{ from, name, origin, description, transporter?, distributor? }` (v1.2: có ví mời thì gọi `createProductWithInvites`) | TxResult + `productId` | `tx-success.json` |
 | 8 | POST | `/products/:id/pickup` | `{ from, note }` | TxResult | `tx-success.json` |
 | 9 | POST | `/products/:id/receive` | `{ from, note }` | TxResult | `tx-success.json` |
 | 10 | POST | `/products/:id/sell` | `{ from, note }` | TxResult | `tx-success.json` |
@@ -50,6 +50,11 @@ Base URL: `http://localhost:3000/api` (khi frontend được backend phục vụ
 | 24 | GET | `/businesses` | — | `Business[]` (không có `activity`) | `businesses.json` |
 | 25 | GET | `/businesses/:address` | — | `BusinessDetail` | `business-detail.json` |
 | 26 | POST | `/businesses/refresh` | — | `{ success: true }` (xoá dữ liệu nhớ tạm 10 giây) | — |
+| 27 | GET | `/invitations` | query `?address=0x…` (bắt buộc), `&stage=invited\|todo\|upcoming\|done` (tuỳ chọn) | `MyInvitation[]` (id sản phẩm tăng dần, rồi theo nhiệm vụ) | `invitations.json` (của ví Giao Hàng Nhanh) |
+| 28 | GET | `/invitations/to-send` | query `?address=0x…` | `InviteToSend[]` | `invitations-to-send.json` (của ví NPP Miền Bắc) |
+| 29 | POST | `/products/:id/invite` | `{ from, task, invitee }` | TxResult | `tx-success.json` |
+| 30 | POST | `/products/:id/accept` | `{ from, task }` | TxResult | `tx-success.json` |
+| 31 | POST | `/products/:id/decline` | `{ from, task }` | TxResult | `tx-success.json` |
 
 ### Luồng v1.1 (Sepolia + MetaMask)
 
@@ -59,6 +64,28 @@ Base URL: `http://localhost:3000/api` (khi frontend được backend phục vụ
    `POST /applications/:id/approve { txHash }`. Backend đọc lại chuỗi, chỉ duyệt khi ví đã có đúng vai trò.
 4. Từ đây doanh nghiệp ký `createProduct`, `pickUpProduct`… trong MetaMask. Chưa duyệt thì contract tự từ chối (`Sai vai tro`).
 5. Thu hồi: quản trị viên ký `deactivateParticipant(address)`; `Business.isActive` thành `false`.
+
+### Luồng v1.2 — Lời mời tham gia quy trình
+
+Mỗi sản phẩm có 4 nhiệm vụ (`task`, khớp enum `Task` của contract). Chỉ doanh nghiệp **đã chấp nhận** lời mời
+mới làm được bước tương ứng (contract từ chối `Ban chua nhan loi moi cho nhiem vu nay`).
+**Quy tắc theo chặng:** một chặng vận chuyển chỉ bắt đầu khi CẢ bên chở và bên nhận đã chấp nhận
+(chặng 1 = task 0 + 1, chặng 2 = task 2 + 3); thiếu bên nhận thì contract từ chối `Ben nhan chua chap nhan loi moi`.
+
+| task | taskText | Vai trò được mời | Ai mời | Làm khi `status` = |
+| --- | --- | --- | --- | --- |
+| 0 | Vận chuyển đến nhà phân phối | 2 Vận chuyển | Nhà sản xuất của sản phẩm | 0 (`pickup`) |
+| 1 | Phân phối | 3 Nhà phân phối | Nhà sản xuất của sản phẩm | 1 (`receive`) |
+| 2 | Vận chuyển đến cửa hàng | 2 Vận chuyển | NPP đã chấp nhận task 1 | 2 (`pickup`) |
+| 3 | Bán lẻ | 4 Nhà bán lẻ | NPP đã chấp nhận task 1 | 3 (`receive`), 4 (`sell`) |
+
+1. Nhà sản xuất ký `createProductWithInvites(name, origin, description, transporter, distributor)` (hoặc `createProduct`
+   rồi `inviteParticipant`). Mời được / mời lại khi lời mời chưa được chấp nhận và `status <= task`.
+2. Doanh nghiệp xem `GET /invitations?address=<ví>&stage=invited` → ký `acceptInvitation(id, task)` hoặc `declineInvitation(id, task)`.
+3. Mục "Xử lý đơn" chỉ dùng `GET /invitations?address=<ví>`: nhóm theo `stage`; nút thao tác lấy từ `action`.
+   Doanh nghiệp không được mời không thấy sản phẩm ở đây (vẫn tra cứu công khai được).
+4. Người có quyền mời (NSX, NPP) xem việc cần mời ở `GET /invitations/to-send?address=<ví>` → ký `inviteParticipant(id, task, invitee)`.
+5. Contract chưa nâng cấp (ABI chưa có `getInvitations`) → backend trả `invitations: []` và danh sách rỗng, không báo lỗi.
 
 ## Kiểu dữ liệu
 
@@ -94,7 +121,34 @@ BusinessDetail   Business + activity: [{ productId, productName, status, statusT
 ```
 Hồ sơ lưu ở `backend/data/applications.json` (không commit). Nonce và phiên lưu trong bộ nhớ: khởi động lại backend thì ký lại.
 
+Kiểu dữ liệu v1.2:
+
+```text
+Invitation    { task, taskText, role, roleText, invitee, inviteeName, inviter, inviterName, state, stateText }
+              luôn đủ 4 phần tử (task 0..3); invitee = "" khi chưa mời
+              state: "none" (Chưa mời) | "pending" (Chờ chấp nhận) | "accepted" (Đã chấp nhận)
+              inviter = ví có quyền mời task đó; task 2, 3 = "" khi chưa có NPP chấp nhận task 1
+MyInvitation  { productId, productName, status, statusText } + Invitation
+              + { stage, stageText, canActNow, action }
+              + { waitingFor }
+              stage: "invited" (Lời mời mới) | "todo" (Cần xử lý) | "upcoming" (Sắp tới) | "done" (Đã xong)
+              upcoming = chưa tới bước, HOẶC là task vận chuyển (0, 2) đã tới bước nhưng bên nhận của chặng
+              (task 1, 3) chưa chấp nhận. waitingFor = lý do khi upcoming, ngược lại "":
+              "Chờ hàng đến bước của bạn" | "Chờ nhà phân phối chấp nhận lời mời" | "Chờ nhà bán lẻ chấp nhận lời mời"
+              canActNow = (stage === "todo"); action: "pickup" | "receive" | "sell" khi todo, ngược lại null
+              Lời mời đang chờ mà sản phẩm đã qua bước đó thì không trả về.
+InviteToSend  { productId, productName, status, statusText, tasks: Invitation[] }
+              tasks = nhiệm vụ ví này được mời / mời lại: inviter là ví này, state khác "accepted", status <= task
+```
+Mock: `product-invitations.json` chứa 4 lời mời của từng sản phẩm mẫu (khoá = id); backend `MOCK_CHAIN=true`
+tính endpoint 27, 28 từ file này. `invitations.json`, `invitations-to-send.json` là ví dụ response cho frontend chạy Live Server.
+
 ## Changelog
 - v1.0.0 — bản đầu tiên.
 - v1.1.0 — THÊM endpoint 13–26 (cấu hình chuỗi, đăng nhập bằng ví, hồ sơ doanh nghiệp, doanh nghiệp công khai)
   và mock tương ứng. Endpoint ghi của v1 giữ nguyên nhưng chỉ dùng với Ganache local.
+- v1.2.0 — THÊM lời mời tham gia quy trình: endpoint 27–31, trường `invitations` trong `GET /products/:id`,
+  trường tuỳ chọn `transporter`, `distributor` cho `POST /products`, kiểu `Invitation`, `MyInvitation`, `InviteToSend`
+  và mock `product-invitations.json`, `invitations.json`, `invitations-to-send.json`. Không đổi/xoá gì của v1.1.
+  Quy tắc theo chặng: vận chuyển chỉ "Cần xử lý" khi bên nhận của chặng đã chấp nhận (`MyInvitation.waitingFor`).
+  Cần contract có `getInvitations` (xem `docs/DE_XUAT_CONTRACT_LOI_MOI.md`).

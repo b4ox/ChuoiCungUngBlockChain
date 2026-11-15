@@ -3,6 +3,7 @@
 // Chạy trên Ganache vừa khởi động + contract vừa deploy:
 //   - Đăng ký 4 thành viên (Account 1..4)
 //   - Tạo 3 sản phẩm ở 3 trạng thái: Đã bán, Ở nhà phân phối, Đã sản xuất
+//   - v1.2: nếu contract có lời mời thì mời / chấp nhận trước mỗi bước
 // Dùng chính service của backend nên cũng là bài kiểm tra luồng 6 bước.
 // =============================================================
 const { provider, readContract, RPC_URL, CONTRACT_ADDRESS, CHAIN_ID, GANACHE_CHAIN_ID } = require('../config/blockchain');
@@ -40,6 +41,24 @@ async function moveProduct(acc, id, steps) {
   }
 }
 
+// =============================================================
+// LỜI MỜI (v1.2, chỉ khi contract đã hỗ trợ). Lời mời nhiệm vụ 0, 1
+// được gửi lúc tạo sản phẩm; mỗi sản phẩm để lại một tình huống demo:
+//   steps 0: GHN và NPP mới được mời, chưa trả lời -> tab "Lời mời"
+//   steps 2: đã nhận nhiệm vụ 0, 1; NPP chưa mời chặng 2 -> "Cần mời"
+//   steps 5: đủ 4 nhiệm vụ đã chấp nhận
+// =============================================================
+async function prepareInvites(acc, id, steps) {
+  if (!service.invitationsSupported() || steps === 0) return;
+  await service.accept(acc[2], id, { task: 0 });
+  await service.accept(acc[3], id, { task: 1 });
+  if (steps <= 2) return;
+  await service.invite(acc[3], id, { task: 2, invitee: acc[2] });
+  await service.invite(acc[3], id, { task: 3, invitee: acc[4] });
+  await service.accept(acc[2], id, { task: 2 });
+  await service.accept(acc[4], id, { task: 3 });
+}
+
 async function main() {
   // Seed cần tài khoản mở khoá sẵn, chỉ Ganache có. Trên Sepolia doanh nghiệp tự đăng ký.
   if (CHAIN_ID !== GANACHE_CHAIN_ID) {
@@ -60,7 +79,9 @@ async function main() {
   }
 
   for (const p of PRODUCTS) {
-    const { productId } = await service.createProduct(acc[1], p);
+    const input = service.invitationsSupported() ? { ...p, transporter: acc[2], distributor: acc[3] } : p;
+    const { productId } = await service.createProduct(acc[1], input);
+    await prepareInvites(acc, productId, p.steps);
     await moveProduct(acc, productId, p.steps);
     console.log(`  + Sản phẩm #${productId}: ${p.name} (đi ${p.steps} bước)`);
   }

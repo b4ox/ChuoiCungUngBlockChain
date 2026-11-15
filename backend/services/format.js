@@ -67,6 +67,6 @@ function formatEvent(ev, names, seconds) {
 }
 
 module.exports = {
-  STATUS_TEXT, ROLE_TEXT, toIso,
+  STATUS_TEXT, ROLE_TEXT, toIso, nameOf,
   formatParticipant, formatProduct, formatHistory, formatEvent,
 };

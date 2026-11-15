@@ -5,9 +5,12 @@
 const {
   provider, readContract, getContract, CONTRACT_ADDRESS, CONTRACT_READY, DEPLOY_BLOCK, GANACHE_CHAIN_ID, CHAIN_ID,
 } = require('../config/blockchain');
-const { getAddress } = require('ethers');
+const { getAddress, ZeroAddress } = require('ethers');
 const fmt = require('./format');
-const { httpError, requireAddress, requireText, parseId, parseRole } = require('../utils/validate');
+const invitationLogic = require('./invitationLogic');
+const {
+  httpError, requireAddress, requireText, parseId, parseRole, parseTask, parseStage,
+} = require('../utils/validate');
 
 // Số khối tối đa mỗi lần hỏi event (RPC công khai của Sepolia giới hạn khoảng quét)
 const LOG_CHUNK_SIZE = Number(process.env.LOG_CHUNK_SIZE) || 5000;
@@ -113,6 +116,7 @@ async function getProductDetail(idParam) {
   return {
     product: fmt.formatProduct(product, names),
     history: history.map((h) => fmt.formatHistory(h, names)),
+    invitations: await loadInvitations(id, product.manufacturer, names), // v1.2
   };
 }
 
@@ -127,6 +131,57 @@ async function getAllHistories() {
     result.push({ product, history });
   }
   return result;
+}
+
+// =============================================================
+// LỜI MỜI (v1.2): đọc getInvitations(id) của contract. Mời / chấp nhận /
+// từ chối do doanh nghiệp tự ký trong MetaMask, backend chỉ đọc và tính
+// sẵn giai đoạn (stage) để frontend chia nhóm. Contract cũ chưa có hàm
+// getInvitations thì trả mảng rỗng thay vì báo lỗi.
+// =============================================================
+function invitationsSupported() {
+  try {
+    return readContract.interface.getFunction('getInvitations') !== null;
+  } catch (err) {
+    return false;
+  }
+}
+
+// 4 lời mời đã định dạng của một sản phẩm ([] nếu contract chưa hỗ trợ)
+async function loadInvitations(id, manufacturer, names) {
+  if (!invitationsSupported()) return [];
+  const raw = await readContract.getInvitations(id);
+  return invitationLogic.formatInvitations(raw, manufacturer, names);
+}
+
+// Mọi sản phẩm kèm 4 lời mời, làm đầu vào cho invitationLogic
+async function getInvitationEntries() {
+  const count = Number(await readContract.productCount());
+  const names = await getNameMap();
+  const entries = [];
+  for (let id = 1; id <= count; id++) {
+    const raw = await readContract.getProduct(id);
+    entries.push({
+      product: fmt.formatProduct(raw, names),
+      invitations: await loadInvitations(id, raw.manufacturer, names),
+    });
+  }
+  return entries;
+}
+
+// GET /invitations?address=&stage=
+async function getInvitationsFor(address, stage) {
+  requireAddress(address, 'address');
+  const stageFilter = parseStage(stage);
+  if (!invitationsSupported()) return [];
+  return invitationLogic.invitationsFor(await getInvitationEntries(), address, stageFilter);
+}
+
+// GET /invitations/to-send?address=
+async function getInvitesToSend(address) {
+  requireAddress(address, 'address');
+  if (!invitationsSupported()) return [];
+  return invitationLogic.invitesToSend(await getInvitationEntries(), address);
 }
 
 // =============================================================
@@ -196,9 +251,16 @@ async function registerParticipant(from, body) {
 }
 
 // Lấy id sản phẩm mới từ event ProductCreated trong receipt
+// v1.2: có transporter / distributor thì tạo kèm lời mời trong cùng giao dịch
 async function createProduct(from, body) {
   const args = [requireText(body.name, 'name'), requireText(body.origin, 'origin'), body.description || ''];
-  const r = await sendTx(from, 'createProduct', args);
+  let method = 'createProduct';
+  if (body.transporter || body.distributor) {
+    method = 'createProductWithInvites';
+    args.push(body.transporter ? requireAddress(body.transporter, 'transporter') : ZeroAddress);
+    args.push(body.distributor ? requireAddress(body.distributor, 'distributor') : ZeroAddress);
+  }
+  const r = await sendTx(from, method, args);
   let productId = null;
   for (const log of r.receipt.logs) {
     const parsed = readContract.interface.parseLog(log);
@@ -219,8 +281,24 @@ async function sell(from, id, note) {
   return txResult(await sendTx(from, 'markAsSold', [parseId(id), note || '']));
 }
 
+// v1.2 (Ganache): body { task, invitee } / { task }
+async function invite(from, id, body) {
+  const args = [parseId(id), parseTask(body.task), requireAddress(body.invitee, 'invitee')];
+  return txResult(await sendTx(from, 'inviteParticipant', args));
+}
+
+async function accept(from, id, body) {
+  return txResult(await sendTx(from, 'acceptInvitation', [parseId(id), parseTask(body.task)]));
+}
+
+async function decline(from, id, body) {
+  return txResult(await sendTx(from, 'declineInvitation', [parseId(id), parseTask(body.task)]));
+}
+
 module.exports = {
   getHealth, getOwner, getAccounts, getParticipants, getParticipant,
   getProducts, getProductDetail, getAllHistories, getEvents,
   registerParticipant, createProduct, pickUp, receive, sell,
+  // v1.2: lời mời
+  invitationsSupported, getInvitationsFor, getInvitesToSend, invite, accept, decline,
 };

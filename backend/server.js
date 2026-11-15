@@ -37,6 +37,8 @@ app.use('/api/config', require('./routes/configRoutes'));
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/applications', require('./routes/applicationRoutes'));
 app.use('/api/businesses', require('./routes/businessRoutes'));
+// v1.2: lời mời tham gia quy trình của từng sản phẩm
+app.use('/api/invitations', require('./routes/invitationRoutes'));
 
 // Đường dẫn /api không tồn tại -> trả JSON thay vì trang HTML mặc định
 app.use('/api', (req, res) => {
