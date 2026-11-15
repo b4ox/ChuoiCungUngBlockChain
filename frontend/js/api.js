@@ -15,6 +15,8 @@ const MOCK_FILES = {
   '/auth/me': 'auth-me.json',
   '/applications/me': 'application.json',
   '/applications': 'applications.json',
+  '/invitations': 'invitations.json',
+  '/invitations/to-send': 'invitations-to-send.json',
 };
 
 // =============================================================

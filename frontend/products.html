@@ -71,6 +71,12 @@
             <label class="form-label" for="productDescription">Mô tả</label>
             <textarea class="form-control" id="productDescription" name="description" rows="3" maxlength="300" required></textarea>
           </div>
+          <fieldset class="border rounded p-3 mb-3">
+            <legend class="float-none w-auto px-1 fs-6 fw-semibold">Mời đối tác ban đầu (không bắt buộc)</legend>
+            <div class="mb-3"><label class="form-label" for="transporter">Đơn vị vận chuyển</label><select id="transporter" name="transporter" class="form-select" disabled><option value="">Không chọn</option></select></div>
+            <div><label class="form-label" for="distributor">Nhà phân phối</label><select id="distributor" name="distributor" class="form-select" disabled><option value="">Không chọn</option></select></div>
+            <p id="inviteOptionsState" class="small text-body-secondary mt-2 mb-0" role="status">Đang tải danh sách đối tác...</p>
+          </fieldset>
           <p class="small text-body-secondary mb-2"><i class="bi bi-wallet2 me-1"></i>MetaMask sẽ hỏi xác nhận giao dịch; phí gas trả bằng ví của bạn.</p>
           <div class="alert alert-danger py-2 small d-none mb-0" id="productFormError" role="alert"></div>
         </div>
