@@ -9,6 +9,87 @@
     "inputs": [
       {
         "indexed": true,
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "enum SupplyChain.Task",
+        "name": "task",
+        "type": "uint8"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "invitee",
+        "type": "address"
+      }
+    ],
+    "name": "InvitationAccepted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "enum SupplyChain.Task",
+        "name": "task",
+        "type": "uint8"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "invitee",
+        "type": "address"
+      }
+    ],
+    "name": "InvitationDeclined",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "enum SupplyChain.Task",
+        "name": "task",
+        "type": "uint8"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "invitee",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "inviter",
+        "type": "address"
+      }
+    ],
+    "name": "InvitationSent",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
         "internalType": "address",
         "name": "account",
         "type": "address"
@@ -101,6 +182,24 @@
   {
     "inputs": [
       {
+        "internalType": "uint256",
+        "name": "_id",
+        "type": "uint256"
+      },
+      {
+        "internalType": "enum SupplyChain.Task",
+        "name": "_task",
+        "type": "uint8"
+      }
+    ],
+    "name": "acceptInvitation",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "string",
         "name": "_name",
         "type": "string"
@@ -124,12 +223,63 @@
   {
     "inputs": [
       {
+        "internalType": "string",
+        "name": "_name",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_origin",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_description",
+        "type": "string"
+      },
+      {
+        "internalType": "address",
+        "name": "_transporter",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_distributor",
+        "type": "address"
+      }
+    ],
+    "name": "createProductWithInvites",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
         "name": "_account",
         "type": "address"
       }
     ],
     "name": "deactivateParticipant",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_id",
+        "type": "uint256"
+      },
+      {
+        "internalType": "enum SupplyChain.Task",
+        "name": "_task",
+        "type": "uint8"
+      }
+    ],
+    "name": "declineInvitation",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -196,6 +346,37 @@
         "type": "uint256"
       }
     ],
+    "name": "getInvitations",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "invitee",
+            "type": "address"
+          },
+          {
+            "internalType": "bool",
+            "name": "accepted",
+            "type": "bool"
+          }
+        ],
+        "internalType": "struct SupplyChain.Invitation[4]",
+        "name": "",
+        "type": "tuple[4]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_id",
+        "type": "uint256"
+      }
+    ],
     "name": "getProduct",
     "outputs": [
       {
@@ -247,6 +428,29 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_id",
+        "type": "uint256"
+      },
+      {
+        "internalType": "enum SupplyChain.Task",
+        "name": "_task",
+        "type": "uint8"
+      },
+      {
+        "internalType": "address",
+        "name": "_invitee",
+        "type": "address"
+      }
+    ],
+    "name": "inviteParticipant",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {

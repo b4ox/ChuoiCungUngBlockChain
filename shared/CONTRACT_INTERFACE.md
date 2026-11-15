@@ -1,4 +1,4 @@
-# CONTRACT_INTERFACE.md — SupplyChain v1.1
+# CONTRACT_INTERFACE.md — SupplyChain v1.2
 
 > Chủ sở hữu: **Contract (A)**. Trạng thái: **bản nháp v1** — A xác nhận và đóng băng tại mốc M1 (hết Ngày 2).
 > Backend và Frontend dựa vào file này. Sau M1 chỉ được THÊM; đổi/xoá phải tăng version và ghi Changelog.
@@ -78,6 +78,42 @@ event ParticipantDeactivated(address indexed account); // v1.1
 | `San pham chua den cua hang` | `markAsSold` khi status != 4 |
 | `Ban khong giu san pham nay` | `markAsSold` bởi retailer không giữ hàng |
 
+## Lời mời v1.2
+
+`Task` lần lượt là `TransportToDistributor = 0`, `Distribute = 1`,
+`TransportToRetailer = 2`, `Retail = 3`. Nhà sản xuất mời cho task 0 và 1.
+Nhà phân phối đã chấp nhận task 1 mời cho task 2 và 3.
+
+```solidity
+struct Invitation { address invitee; bool accepted; }
+
+function inviteParticipant(uint256 _id, Task _task, address _invitee) external;
+function acceptInvitation(uint256 _id, Task _task) external;
+function declineInvitation(uint256 _id, Task _task) external;
+function createProductWithInvites(string memory _name, string memory _origin, string memory _description,
+    address _transporter, address _distributor) external;
+function getInvitations(uint256 _id) external view returns (Invitation[4] memory);
+
+event InvitationSent(uint256 indexed id, Task task, address indexed invitee, address indexed inviter);
+event InvitationAccepted(uint256 indexed id, Task task, address indexed invitee);
+event InvitationDeclined(uint256 indexed id, Task task, address indexed invitee);
+```
+
+- Địa chỉ `0x0` là ô chưa mời. Trong `createProductWithInvites`, truyền `0x0` cho đối tác muốn mời sau.
+- Chỉ mời hoặc mời lại khi trạng thái sản phẩm chưa vượt chỉ số task và chưa có người chấp nhận. Người được mời phải đang hoạt động và đúng vai trò. Từ chối một lời mời đang chờ sẽ làm trống ô đó.
+- `pickUpProduct` và `receiveProduct` yêu cầu đúng ví đã chấp nhận lời mời. Trước khi vận chuyển, bên nhận chặng đó cũng phải chấp nhận và còn hoạt động với đúng vai trò. `markAsSold` vẫn yêu cầu nhà bán lẻ đang giữ hàng.
+
+| Câu lỗi | Khi nào |
+| --- | --- |
+| `Ban khong co quyen moi nhiem vu nay` | Ví gọi không phải đối tác đang hoạt động có quyền mời cho nhiệm vụ |
+| `Nhiem vu da qua` | Mời hoặc chấp nhận sau khi bước tương ứng đã qua |
+| `Nhiem vu da co nguoi nhan` | Mời lại khi đã có người chấp nhận |
+| `Doanh nghiep khong dung vai tro` | Lời mời dành cho ví không hợp lệ, bị khóa hoặc sai vai trò, hoặc ví đổi sang sai vai trước khi chấp nhận |
+| `Ban khong duoc moi` | Ví gọi không phải ví được mời |
+| `Da chap nhan roi` | Chấp nhận lại hoặc từ chối sau khi đã chấp nhận |
+| `Ban chua nhan loi moi cho nhiem vu nay` | Nhận chở hoặc nhận hàng mà chưa chấp nhận đúng nhiệm vụ |
+| `Ben nhan chua chap nhan loi moi` | Bên nhận chưa chấp nhận hoặc không còn đủ điều kiện nhận |
+
 ## Triển khai
 - Compile: Solidity 0.8.20+, **EVM version = paris**.
 - ABI: `shared/contract/SupplyChain.abi.json`. Địa chỉ: `shared/contract/deployment.json`.
@@ -87,3 +123,4 @@ event ParticipantDeactivated(address indexed account); // v1.1
 ## Changelog
 - v1.0.0 — bản đầu tiên.
 - v1.1.0 — THÊM `deactivateParticipant`, event `ParticipantDeactivated`, câu lỗi `Thanh vien da bi khoa`. Không đổi gì của v1.0.
+- v1.2.0 — Thêm lời mời theo nhiệm vụ. Giữ nguyên chữ ký cũ, đổi điều kiện thực hiện `pickUpProduct` và `receiveProduct`.
