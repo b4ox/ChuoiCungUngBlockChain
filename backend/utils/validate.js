@@ -42,4 +42,23 @@ function parseRole(value) {
   return role;
 }
 
-module.exports = { httpError, requireAddress, requireText, parseId, parseRole };
+// Nhiệm vụ trong quy trình chỉ nhận 0..3 (khớp enum Task của contract)
+function parseTask(value) {
+  const task = Number(value);
+  if (value === undefined || value === null || value === '' || !Number.isInteger(task) || task < 0 || task > 3) {
+    throw httpError(400, 'Nhiệm vụ phải từ 0 đến 3');
+  }
+  return task;
+}
+
+// Giai đoạn lời mời dùng để lọc; bỏ trống = lấy tất cả
+const STAGES = ['invited', 'todo', 'upcoming', 'done'];
+function parseStage(value) {
+  if (value === undefined || value === '') return undefined;
+  if (!STAGES.includes(value)) {
+    throw httpError(400, 'stage phải là invited, todo, upcoming hoặc done');
+  }
+  return value;
+}
+
+module.exports = { httpError, requireAddress, requireText, parseId, parseRole, parseTask, parseStage };

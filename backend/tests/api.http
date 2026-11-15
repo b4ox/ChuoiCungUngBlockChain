@@ -138,3 +138,50 @@ Authorization: Bearer {{token}}
 
 ### 24. Doanh nghiệp công khai
 GET {{api}}/businesses
+
+### ===== v1.2: lời mời tham gia quy trình =====
+### Với contract v1.2, luồng 6 bước ở trên chỉ chạy được sau khi mời + chấp nhận đúng nhiệm vụ.
+### Nhiệm vụ: 0 Vận chuyển đến NPP, 1 Phân phối (NSX mời) | 2 Vận chuyển đến cửa hàng, 3 Bán lẻ (NPP mời)
+
+### 7b. Tạo sản phẩm kèm lời mời nhiệm vụ 0 và 1 trong một giao dịch
+POST {{api}}/products
+Content-Type: application/json
+
+{ "from": "{{manufacturer}}", "name": "Mật ong rừng U Minh", "origin": "Cà Mau", "description": "Chai 500ml",
+  "transporter": "{{transporter}}", "distributor": "{{distributor}}" }
+
+### 27. Lời mời gửi tới ví vận chuyển (stage: invited | todo | upcoming | done, bỏ trống = tất cả)
+GET {{api}}/invitations?address={{transporter}}&stage=invited
+
+### 28. Sản phẩm mà nhà phân phối đang cần mời chặng 2
+GET {{api}}/invitations/to-send?address={{distributor}}
+
+### 29. Mời (NSX mời nhiệm vụ 0/1; NPP đã nhận nhiệm vụ 1 mời nhiệm vụ 2/3)
+POST {{api}}/products/{{id}}/invite
+Content-Type: application/json
+
+{ "from": "{{distributor}}", "task": 3, "invitee": "{{retailer}}" }
+
+### 30. Chấp nhận lời mời
+POST {{api}}/products/{{id}}/accept
+Content-Type: application/json
+
+{ "from": "{{transporter}}", "task": 0 }
+
+### 31. Từ chối lời mời (ô nhiệm vụ trống lại để mời bên khác)
+POST {{api}}/products/{{id}}/decline
+Content-Type: application/json
+
+{ "from": "{{retailer}}", "task": 3 }
+
+### Lỗi: vận chuyển chưa nhận lời mời mà nhận hàng -> "Ban chua nhan loi moi cho nhiem vu nay"
+POST {{api}}/products/{{id}}/pickup
+Content-Type: application/json
+
+{ "from": "{{transporter}}", "note": "" }
+
+### Lỗi: nhiệm vụ ngoài 0..3 -> 400 "Nhiệm vụ phải từ 0 đến 3"
+POST {{api}}/products/{{id}}/accept
+Content-Type: application/json
+
+{ "from": "{{transporter}}", "task": 7 }

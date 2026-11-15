@@ -45,7 +45,8 @@ router.get('/:id/qrcode', async (req, res, next) => {
   }
 });
 
-// POST /api/products  body: { from, name, origin, description }
+// POST /api/products  body: { from, name, origin, description, transporter?, distributor? }
+// v1.2: có transporter/distributor thì contract tạo kèm lời mời nhiệm vụ 0 và 1
 router.post('/', async (req, res, next) => {
   try {
     res.json(await service.createProduct(req.body.from, req.body));
@@ -63,6 +64,21 @@ router.post('/:id/:action(pickup|receive|sell)', async (req, res, next) => {
   try {
     const method = ACTIONS[req.params.action];
     res.json(await service[method](req.body.from, req.params.id, req.body.note));
+  } catch (err) {
+    next(err);
+  }
+});
+
+// =============================================================
+// v1.2 LỜI MỜI (chỉ Ganache local, giống pickup/receive/sell):
+//   invite  body { from, task, invitee }
+//   accept  body { from, task }
+//   decline body { from, task }
+// Trên Sepolia doanh nghiệp tự ký các hàm này trong MetaMask.
+// =============================================================
+router.post('/:id/:action(invite|accept|decline)', async (req, res, next) => {
+  try {
+    res.json(await service[req.params.action](req.body.from, req.params.id, req.body));
   } catch (err) {
     next(err);
   }
