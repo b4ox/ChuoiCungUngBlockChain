@@ -27,6 +27,7 @@
         <li class="nav-item"><button class="nav-link" type="button" data-tab="approved">Đã duyệt <span class="badge text-bg-secondary" data-count="approved">0</span></button></li>
         <li class="nav-item"><button class="nav-link" type="button" data-tab="rejected">Từ chối <span class="badge text-bg-secondary" data-count="rejected">0</span></button></li>
         <li class="nav-item"><button class="nav-link" type="button" data-tab="members">Thành viên trên chuỗi <span class="badge text-bg-secondary" data-count="members">0</span></button></li>
+        <li class="nav-item"><button class="nav-link" type="button" data-tab="blocked">Chuyển nhiệm vụ <span class="badge text-bg-danger" data-count="blocked">0</span></button></li>
       </ul>
 
       <!-- ===== HỒ SƠ (3 tab đầu) ===== -->
@@ -72,7 +73,16 @@
           <p class="text-center text-body-secondary small my-3" id="memberState"></p>
         </div>
         <p class="small text-body-secondary mt-2">Thu hồi gọi <code>deactivateParticipant</code>: ví bị khoá mọi chức năng, lịch sử cũ vẫn giữ.
-          Mở lại gọi <code>registerParticipant</code> với tên và vai trò cũ. Cả hai đều là giao dịch ký bằng ví quản trị.</p>
+          Mở lại gọi <code>registerParticipant</code> với tên và vai trò cũ (không đổi được vai trò). Cả hai đều là giao dịch ký bằng ví quản trị.</p>
+      </section>
+
+      <!-- ===== CHUYỂN NHIỆM VỤ (v1.3): bên đã nhận nhiệm vụ bị khoá ===== -->
+      <section class="d-none" id="blockedPane">
+        <p class="small text-body-secondary">Các nhiệm vụ dưới đây có doanh nghiệp đã nhận lời nhưng đã bị thu hồi vai trò, nên sản phẩm không đi tiếp được.
+          Sau khi các bên thống nhất ngoài đời (theo hợp đồng), chọn doanh nghiệp thay thế và ký <code>reassignTask</code>.
+          Doanh nghiệp mới được ghi là đã nhận nhiệm vụ; nếu bên cũ đang giữ hàng thì hàng chuyển sang bên mới, bước giao nhận đang dở phải xác nhận lại.</p>
+        <div class="row g-3" id="blockedList"></div>
+        <p class="text-center text-body-secondary small my-4" id="blockedState">Đang tải...</p>
       </section>
     </div>
   </main>

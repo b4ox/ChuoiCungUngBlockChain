@@ -4,9 +4,11 @@
 //   -> báo backend (POST /applications/:id/approve) để đánh dấu đã duyệt.
 // - Từ chối: chỉ ghi ở backend kèm lý do, không tốn gas.
 // - Thu hồi / mở lại vai trò: ký deactivateParticipant / registerParticipant.
+// - v1.3 Chuyển nhiệm vụ: bên đã nhận nhiệm vụ bị khoá -> ký reassignTask.
 // =============================================================
 let applications = [];
 let members = [];
+let blockedTasks = [];
 let currentTab = 'pending';
 const confirmRevoke = {}; // địa chỉ -> true khi đã bấm "Thu hồi" lần 1
 
@@ -21,8 +23,11 @@ function renderTabs() {
     document.querySelector(`[data-count="${status}"]`).textContent = applications.filter(a => a.status === status).length;
   });
   document.querySelector('[data-count="members"]').textContent = members.length;
-  document.getElementById('applicationPane').classList.toggle('d-none', currentTab === 'members');
+  document.querySelector('[data-count="blocked"]').textContent = blockedTasks.length;
+  const isApplicationTab = ['pending', 'approved', 'rejected'].includes(currentTab);
+  document.getElementById('applicationPane').classList.toggle('d-none', !isApplicationTab);
   document.getElementById('memberPane').classList.toggle('d-none', currentTab !== 'members');
+  document.getElementById('blockedPane').classList.toggle('d-none', currentTab !== 'blocked');
 }
 
 // =============================================================
@@ -71,7 +76,7 @@ function applicationCard(app) {
 }
 
 function renderApplications() {
-  if (currentTab === 'members') return;
+  if (!['pending', 'approved', 'rejected'].includes(currentTab)) return;
   const shown = applications.filter(app => app.status === currentTab);
   document.getElementById('applicationList').innerHTML = shown.map(applicationCard).join('');
   document.getElementById('applicationState').textContent = shown.length ? '' : 'Không có hồ sơ nào ở mục này.';
@@ -121,12 +126,60 @@ function renderMembers() {
   document.getElementById('memberState').textContent = state;
 }
 
-async function loadAll() {
+// =============================================================
+// 3b. CHUYỂN NHIỆM VỤ (v1.3): chỉ gợi ý doanh nghiệp đang hoạt động, đúng vai trò
+// =============================================================
+function blockedCard(task, index) {
+  const options = members.filter(m => m.isActive && m.role === task.role && !sameAddress(m.address, task.invitee))
+    .map(m => `<option value="${escapeHtml(m.address)}">${escapeHtml(m.name)} · ${escapeHtml(shortAddress(m.address))}</option>`).join('');
+  const holding = sameAddress(task.currentOwner, task.invitee) ? '<span class="badge text-bg-warning ms-1">Đang giữ hàng</span>' : '';
+  return `<div class="col-md-6"><form class="card h-100 reassign-form" data-index="${index}"><div class="card-body">
+    <div class="d-flex flex-wrap justify-content-between gap-2 mb-2"><h2 class="h6 fw-semibold mb-0">${escapeHtml(task.productName)} <span class="text-body-secondary">#${escapeHtml(task.productId)}</span></h2>${statusBadge(task.status, task.statusText)}</div>
+    <p class="small mb-2">${escapeHtml(task.taskText)} · bên hiện tại: <b>${escapeHtml(task.inviteeName || shortAddress(task.invitee))}</b> <span class="badge text-bg-secondary">Bị khoá</span>${holding}</p>
+    <label class="form-label small" for="reassign-${index}">Doanh nghiệp thay thế (${escapeHtml(task.roleText)})</label>
+    <select class="form-select form-select-sm mb-2" id="reassign-${index}" name="invitee" required><option value="">Chọn doanh nghiệp</option>${options}</select>
+    <label class="form-label small" for="reassign-note-${index}">Ghi chú (ghi vào lịch sử sản phẩm)</label>
+    <input class="form-control form-control-sm mb-2" id="reassign-note-${index}" name="note" maxlength="200" value="Chuyển nhiệm vụ theo thoả thuận ngoài đời">
+    <button class="btn btn-danger btn-sm" type="submit" ${options ? '' : 'disabled'}>Chuyển nhiệm vụ</button>${options ? '' : '<span class="small text-body-secondary ms-2">Chưa có doanh nghiệp phù hợp.</span>'}
+  </div></form></div>`;
+}
+
+function renderBlocked() {
+  document.getElementById('blockedList').innerHTML = blockedTasks.map(blockedCard).join('');
+  document.getElementById('blockedState').textContent = blockedTasks.length ? '' : 'Không có nhiệm vụ nào cần chuyển.';
+}
+
+async function onReassignSubmit(event) {
+  const form = event.target;
+  if (!form.matches('.reassign-form')) return;
+  event.preventDefault();
+  const task = blockedTasks[Number(form.dataset.index)];
+  const invitee = form.elements.invitee.value;
+  if (!task || !invitee) return;
+  const button = form.querySelector('button');
+  setButtonBusy(button, true, 'Xác nhận trong MetaMask...');
   try {
-    [applications, members] = await Promise.all([apiGet('/applications'), apiGet('/participants')]);
+    const args = [Number(task.productId), Number(task.task), invitee, form.elements.note.value.trim()];
+    const result = await sendContractTx('reassignTask', args, () => setButtonBusy(button, true, 'Đang chờ vào khối...'));
+    showToast('Đã chuyển nhiệm vụ. ' + transactionMessage(result), 'success');
+    await loadAll(true);
+  } catch (error) {
+    showToast(error.message);
+  } finally {
+    setButtonBusy(button, false);
+  }
+}
+
+// fresh = true: vừa ký giao dịch, đọc lại lời mời từ chuỗi (bỏ qua nhớ tạm của backend)
+async function loadAll(fresh) {
+  try {
+    [applications, members, blockedTasks] = await Promise.all([
+      apiGet('/applications'), apiGet('/participants'), apiGet('/invitations/blocked' + (fresh ? '?fresh=1' : '')),
+    ]);
     renderTabs();
     renderApplications();
     renderMembers();
+    renderBlocked();
   } catch (error) {
     document.getElementById('applicationState').textContent = 'Không tải được dữ liệu.';
     showToast(error.message);
@@ -184,7 +237,7 @@ async function revokeOrReactivate(member, button, revoking) {
     const result = await sendContractTx(method, args, () => setButtonBusy(button, true, 'Đang chờ...'));
     showToast((revoking ? 'Đã thu hồi ' : 'Đã mở lại ') + member.name + '. ' + transactionMessage(result), 'success');
     await refreshPublicData();
-    await loadAll();
+    await loadAll(true);
   } catch (error) {
     showToast(error.message);
     renderMembers();
@@ -223,6 +276,7 @@ async function onAction(event) {
   });
   document.getElementById('applicationList').addEventListener('click', onAction);
   document.getElementById('memberBody').addEventListener('click', onAction);
+  document.getElementById('blockedList').addEventListener('submit', onReassignSubmit);
   ['memberSearch', 'roleFilter', 'activeFilter'].forEach(id => {
     document.getElementById(id).addEventListener('input', renderMembers);
   });

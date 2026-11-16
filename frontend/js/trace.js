@@ -51,6 +51,26 @@ function renderInvitations(invitations) {
   document.getElementById('invitationBody').innerHTML = list.map(item => `<tr><td>${escapeHtml(item.taskText)}</td><td>${escapeHtml(item.inviteeName || (item.invitee ? shortAddress(item.invitee) : 'Chưa mời'))}</td><td>${escapeHtml(item.stateText)}</td></tr>`).join('');
 }
 
+// =============================================================
+// GIAO NHẬN HAI ĐẦU (v1.3): mỗi bước có xác nhận của bên gửi và bên nhận.
+// Ẩn khối khi contract chưa hỗ trợ (handovers rỗng).
+// =============================================================
+function confirmCell(name, address, time, note) {
+  if (!time) return `<span class="text-body-secondary">${escapeHtml(name || (address ? shortAddress(address) : '—'))} · chưa xác nhận</span>`;
+  const noteHtml = note ? `<div class="small text-body-secondary">${escapeHtml(note)}</div>` : '';
+  return `<i class="bi bi-check2-circle text-success me-1"></i>${escapeHtml(name || shortAddress(address))}<div class="small text-body-secondary">${escapeHtml(formatTime(time))}</div>${noteHtml}`;
+}
+
+function renderHandovers(handovers) {
+  const list = (Array.isArray(handovers) ? handovers : []).filter(item => item.state !== 'none');
+  document.getElementById('handoverSection').classList.toggle('d-none', list.length === 0);
+  document.getElementById('handoverBody').innerHTML = list.map(item => `<tr>
+    <td>${escapeHtml(item.toStatusText)}</td>
+    <td>${confirmCell(item.senderName, item.sender, item.sentAt, item.sentNote)}</td>
+    <td>${confirmCell(item.receiverName, item.receiver, item.receivedAt, item.receivedNote)}</td>
+    <td>${escapeHtml(item.stateText)}</td></tr>`).join('');
+}
+
 function renderQr(productId) {
   const url = qrCodeUrl(productId);
   document.getElementById('qrImage').src = url;
@@ -73,6 +93,7 @@ async function findProduct(id) {
     renderSteps(data.product.status);
     renderTimeline(data.history || []);
     renderInvitations(data.invitations);
+    renderHandovers(data.handovers);
     renderQr(data.product.id);
     result.classList.remove('d-none');
     state.textContent = '';
