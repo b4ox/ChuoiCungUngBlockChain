@@ -17,6 +17,7 @@ const MOCK_FILES = {
   '/applications': 'applications.json',
   '/invitations': 'invitations.json',
   '/invitations/to-send': 'invitations-to-send.json',
+  '/invitations/blocked': 'invitations-blocked.json',
 };
 
 // =============================================================
