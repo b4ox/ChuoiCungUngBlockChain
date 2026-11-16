@@ -1,6 +1,8 @@
 # Chuỗi cung ứng ứng dụng Blockchain
 
 DApp truy xuất nguồn gốc sản phẩm: Nhà sản xuất → Vận chuyển → Nhà phân phối → Vận chuyển → Nhà bán lẻ → Đã bán.
+Giả định các doanh nghiệp đã ký hợp đồng ngoài đời: trên website họ mời nhau theo từng lô hàng, và mỗi lần chuyển hàng
+cần **bên gửi và bên nhận cùng xác nhận** — xem [docs/QUY_TRINH_GIAO_NHAN.md](docs/QUY_TRINH_GIAO_NHAN.md).
 Contract chạy trên mạng thử nghiệm **Sepolia**. Doanh nghiệp đăng nhập và đăng ký bằng **ví MetaMask** của mình,
 quản trị viên duyệt hồ sơ, mọi giao dịch do người dùng tự ký và trả phí gas bằng SepoliaETH (miễn phí từ faucet).
 Công nghệ: Remix IDE + MetaMask + Express + HTML/Bootstrap. Vẫn chạy thử được trên Ganache local.
@@ -42,9 +44,9 @@ Dữ liệu trên Sepolia tồn tại lâu dài, không cần deploy hay seed l�
 ## Chạy thử trên Ganache local
 
 1. `npm run chain` — Ganache tại `http://127.0.0.1:7545` (chainId 1337, 10 tài khoản cố định).
-2. Deploy bằng Remix (Custom - External Http Provider, Account 0, giao dịch đầu tiên) → địa chỉ `0xe78A0F7E598Cc8b0Bb87894B0F60dD2a88d6a8Ab`.
+2. Deploy bằng Remix (bật Enable optimization 200; Custom - External Http Provider, Account 0, giao dịch đầu tiên) → địa chỉ `0xe78A0F7E598Cc8b0Bb87894B0F60dD2a88d6a8Ab`.
 3. Trong `backend/.env`: `RPC_URL=http://127.0.0.1:7545`, `CHAIN_ID=1337`, `CONTRACT_ADDRESS=0xe78A…a8Ab`, `DEPLOY_BLOCK=0`.
-4. `npm run seed` (tuỳ chọn, tạo 4 thành viên + 3 sản phẩm) → `npm run backend`.
+4. `npm run seed` (tuỳ chọn, tạo 4 thành viên + 4 sản phẩm ở các tình huống demo) → `npm run backend`.
 5. MetaMask: thêm mạng `http://127.0.0.1:7545`, chain ID 1337; import khoá Account 0 làm ví quản trị.
 
 ## Git — 3 nhánh cố định

@@ -7,7 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const { CONTRACT_ADDRESS, CHAIN_ID } = require('../config/blockchain');
 const { httpError, requireAddress, parseId, parseStage } = require('../utils/validate');
-const invitationLogic = require('./invitationLogic');
+const invitationTasks = require('./invitationTasks');
 
 const MOCK_DIR = path.join(__dirname, '../../shared/mock');
 
@@ -37,30 +37,40 @@ async function getProductDetail(idParam) {
     .sort((a, b) => a.status - b.status)
     .map((e) => ({ status: e.status, statusText: e.statusText, actor: e.actor,
       actorName: e.actorName, time: e.time, note: e.note }));
-  return { product, history, invitations: mockInvitations(id) };
+  return { product, history, invitations: mockInvitations(id), handovers: mockHandovers(id) };
 }
 
 // =============================================================
-// LỜI MỜI MẪU (v1.2): product-invitations.json lưu 4 lời mời của từng
-// sản phẩm (khoá = id). Danh sách theo ví được tính bằng chính
-// invitationLogic như khi chạy thật, nên luôn khớp với dữ liệu mẫu.
+// LỜI MỜI + GIAO NHẬN MẪU (v1.2, v1.3): product-invitations.json và
+// product-handovers.json lưu dữ liệu đã định dạng của từng sản phẩm (khoá = id).
+// Danh sách theo ví được tính bằng chính invitationTasks như khi chạy thật.
 // =============================================================
 function mockInvitations(id) {
   return readMock('product-invitations.json')[String(id)] || [];
 }
 
+function mockHandovers(id) {
+  return readMock('product-handovers.json')[String(id)] || [];
+}
+
 function mockEntries() {
-  return readMock('products.json').map((product) => ({ product, invitations: mockInvitations(product.id) }));
+  return readMock('products.json').map((product) => ({
+    product, invitations: mockInvitations(product.id), handovers: mockHandovers(product.id),
+  }));
 }
 
 async function getInvitationsFor(address, stage) {
   requireAddress(address, 'address');
-  return invitationLogic.invitationsFor(mockEntries(), address, parseStage(stage));
+  return invitationTasks.invitationsFor(mockEntries(), address, parseStage(stage));
 }
 
 async function getInvitesToSend(address) {
   requireAddress(address, 'address');
-  return invitationLogic.invitesToSend(mockEntries(), address);
+  return invitationTasks.invitesToSend(mockEntries(), address);
+}
+
+async function getBlockedTasks() {
+  return invitationTasks.blockedTasks(mockEntries());
 }
 
 async function getEvents(limit) {
@@ -112,7 +122,12 @@ module.exports = {
   invitationsSupported: () => true,
   getInvitationsFor,
   getInvitesToSend,
+  getBlockedTasks,
   invite: (from) => fakeTx(from),
   accept: (from) => fakeTx(from),
   decline: (from) => fakeTx(from),
+  // v1.3
+  send: (from) => fakeTx(from),
+  cancel: (from) => fakeTx(from),
+  reassign: (from) => fakeTx(from),
 };

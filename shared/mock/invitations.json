@@ -10,15 +10,18 @@
     "roleText": "Vận chuyển",
     "invitee": "0x22d491Bde2303f2f43325b2108D26f1eAbA1e32b",
     "inviteeName": "Giao Hàng Nhanh",
+    "valid": true,
     "inviter": "0xFFcf8FDEE72ac11b5c542428B35EEF5769C409f0",
     "inviterName": "Công ty Trà Thái Nguyên",
+    "inviterValid": true,
     "state": "accepted",
     "stateText": "Đã chấp nhận",
     "stage": "done",
     "stageText": "Đã xong",
     "waitingFor": "",
     "canActNow": false,
-    "action": null
+    "action": null,
+    "canWithdraw": false
   },
   {
     "productId": 1,
@@ -31,15 +34,18 @@
     "roleText": "Vận chuyển",
     "invitee": "0x22d491Bde2303f2f43325b2108D26f1eAbA1e32b",
     "inviteeName": "Giao Hàng Nhanh",
+    "valid": true,
     "inviter": "0xE11BA2b4D45Eaed5996Cd0823791E0C93114882d",
     "inviterName": "NPP Miền Bắc",
+    "inviterValid": true,
     "state": "accepted",
     "stateText": "Đã chấp nhận",
     "stage": "done",
     "stageText": "Đã xong",
     "waitingFor": "",
     "canActNow": false,
-    "action": null
+    "action": null,
+    "canWithdraw": false
   },
   {
     "productId": 2,
@@ -52,15 +58,18 @@
     "roleText": "Vận chuyển",
     "invitee": "0x22d491Bde2303f2f43325b2108D26f1eAbA1e32b",
     "inviteeName": "Giao Hàng Nhanh",
+    "valid": true,
     "inviter": "0xFFcf8FDEE72ac11b5c542428B35EEF5769C409f0",
     "inviterName": "Công ty Trà Thái Nguyên",
+    "inviterValid": true,
     "state": "accepted",
     "stateText": "Đã chấp nhận",
     "stage": "done",
     "stageText": "Đã xong",
     "waitingFor": "",
     "canActNow": false,
-    "action": null
+    "action": null,
+    "canWithdraw": false
   },
   {
     "productId": 2,
@@ -73,15 +82,18 @@
     "roleText": "Vận chuyển",
     "invitee": "0x22d491Bde2303f2f43325b2108D26f1eAbA1e32b",
     "inviteeName": "Giao Hàng Nhanh",
+    "valid": true,
     "inviter": "0xE11BA2b4D45Eaed5996Cd0823791E0C93114882d",
     "inviterName": "NPP Miền Bắc",
+    "inviterValid": true,
     "state": "accepted",
     "stateText": "Đã chấp nhận",
     "stage": "todo",
     "stageText": "Cần xử lý",
     "waitingFor": "",
     "canActNow": true,
-    "action": "pickup"
+    "action": "pickup",
+    "canWithdraw": false
   },
   {
     "productId": 3,
@@ -94,14 +106,17 @@
     "roleText": "Vận chuyển",
     "invitee": "0x22d491Bde2303f2f43325b2108D26f1eAbA1e32b",
     "inviteeName": "Giao Hàng Nhanh",
+    "valid": true,
     "inviter": "0xFFcf8FDEE72ac11b5c542428B35EEF5769C409f0",
     "inviterName": "Công ty Trà Thái Nguyên",
+    "inviterValid": true,
     "state": "pending",
     "stateText": "Chờ chấp nhận",
     "stage": "invited",
     "stageText": "Lời mời mới",
     "waitingFor": "",
     "canActNow": false,
-    "action": null
+    "action": null,
+    "canWithdraw": false
   }
 ]
