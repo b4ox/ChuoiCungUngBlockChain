@@ -132,6 +132,7 @@ Phần Contract được coi là xong khi cả 7 ca dưới đây đạt trên G
 | `markAsSold` khi chưa tới cửa hàng | Revert “San pham chua den cua hang” |
 | `getProduct(999)` | Revert “San pham khong ton tai” |
 | Chạy đủ 6 bước | `getHistory` trả 6 bản ghi đúng thứ tự, `status` = 5 |
+| v1.3: lời mời, giao nhận hai đầu, R1–R6 | Xem `docs/QUY_TRINH_GIAO_NHAN.md`; 26 test trong `contracts/tests/` phải đạt |
 
 **Checklist trước khi mở PR:**
 

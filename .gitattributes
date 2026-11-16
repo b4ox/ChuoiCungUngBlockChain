@@ -2,3 +2,6 @@
 * text=auto eol=lf
 *.png binary
 *.jpg binary
+# File batch của Windows cần xuống dòng CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf

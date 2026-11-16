@@ -8,6 +8,7 @@ const {
 const { getAddress, ZeroAddress } = require('ethers');
 const fmt = require('./format');
 const invitationLogic = require('./invitationLogic');
+const invitationTasks = require('./invitationTasks');
 const {
   httpError, requireAddress, requireText, parseId, parseRole, parseTask, parseStage,
 } = require('../utils/validate');
@@ -21,15 +22,26 @@ const FALLBACK_SCAN_BLOCKS = 100000;
 // HÀM ĐỌC DÙNG CHUNG
 // =============================================================
 
-// Bảng tra { địa chỉ viết thường: tên } để điền các trường ...Name
-async function getNameMap() {
-  const names = {};
+// Bảng tra { địa chỉ viết thường: { name, role, isActive } } — v1.3 cần biết ai còn hợp lệ
+async function getMemberMap() {
+  const members = {};
   const list = await readContract.getAllParticipants();
   for (const address of list) {
     const p = await readContract.participants(address);
-    names[address.toLowerCase()] = p.name;
+    members[address.toLowerCase()] = { name: p.name, role: Number(p.role), isActive: p.isActive };
   }
+  return members;
+}
+
+function namesFromMembers(members) {
+  const names = {};
+  for (const key of Object.keys(members)) names[key] = members[key].name;
   return names;
+}
+
+// Bảng tra { địa chỉ viết thường: tên } để điền các trường ...Name
+async function getNameMap() {
+  return namesFromMembers(await getMemberMap());
 }
 
 // Kiểm tra nhanh: blockchain có kết nối được không, contract đã deploy đúng địa chỉ chưa
@@ -110,13 +122,17 @@ async function getProducts(status) {
 
 async function getProductDetail(idParam) {
   const id = parseId(idParam);
-  const product = await readContract.getProduct(id);
+  const raw = await readContract.getProduct(id);
   const history = await readContract.getHistory(id);
-  const names = await getNameMap();
+  const members = await getMemberMap();
+  const names = namesFromMembers(members);
+  const product = fmt.formatProduct(raw, names);
+  const { invitations, handovers } = await loadInvitationData(id, product, members); // v1.2, v1.3
   return {
-    product: fmt.formatProduct(product, names),
+    product,
     history: history.map((h) => fmt.formatHistory(h, names)),
-    invitations: await loadInvitations(id, product.manufacturer, names), // v1.2
+    invitations,
+    handovers,
   };
 }
 
@@ -134,54 +150,105 @@ async function getAllHistories() {
 }
 
 // =============================================================
-// LỜI MỜI (v1.2): đọc getInvitations(id) của contract. Mời / chấp nhận /
-// từ chối do doanh nghiệp tự ký trong MetaMask, backend chỉ đọc và tính
-// sẵn giai đoạn (stage) để frontend chia nhóm. Contract cũ chưa có hàm
-// getInvitations thì trả mảng rỗng thay vì báo lỗi.
+// LỜI MỜI VÀ GIAO NHẬN (v1.2, v1.3): đọc getInvitations / getHandovers.
+// Mời, nhận lời, xác nhận giao nhận do doanh nghiệp tự ký trong MetaMask;
+// backend chỉ đọc và tính sẵn "việc của từng ví" (invitationTasks.js).
+// Contract cũ chưa có hàm hoặc đọc lỗi -> trả [] thay vì làm hỏng trang.
 // =============================================================
-function invitationsSupported() {
+function contractHas(name) {
   try {
-    return readContract.interface.getFunction('getInvitations') !== null;
+    return readContract.interface.getFunction(name) !== null;
   } catch (err) {
     return false;
   }
 }
 
-// 4 lời mời đã định dạng của một sản phẩm ([] nếu contract chưa hỗ trợ)
-async function loadInvitations(id, manufacturer, names) {
-  if (!invitationsSupported()) return [];
-  const raw = await readContract.getInvitations(id);
-  return invitationLogic.formatInvitations(raw, manufacturer, names);
+function invitationsSupported() {
+  return contractHas('getInvitations');
 }
 
-// Mọi sản phẩm kèm 4 lời mời, làm đầu vào cho invitationLogic
-async function getInvitationEntries() {
+// 4 lời mời + 4 bước giao nhận đã định dạng của một sản phẩm
+async function loadInvitationData(id, product, members) {
+  if (!invitationsSupported()) return { invitations: [], handovers: [] };
+  try {
+    const rawInvitations = await readContract.getInvitations(id);
+    const invitations = invitationLogic.formatInvitations(rawInvitations, product.manufacturer, members);
+    let handovers = [];
+    if (contractHas('getHandovers')) {
+      handovers = invitationLogic.formatHandovers(await readContract.getHandovers(id), product, invitations, members);
+    }
+    return { invitations, handovers };
+  } catch (err) {
+    console.warn(`Không đọc được lời mời của sản phẩm #${id}:`, err.shortMessage || err.message);
+    return { invitations: [], handovers: [] };
+  }
+}
+
+async function readAllEntries() {
   const count = Number(await readContract.productCount());
-  const names = await getNameMap();
+  const members = await getMemberMap();
+  const names = namesFromMembers(members);
   const entries = [];
   for (let id = 1; id <= count; id++) {
-    const raw = await readContract.getProduct(id);
-    entries.push({
-      product: fmt.formatProduct(raw, names),
-      invitations: await loadInvitations(id, raw.manufacturer, names),
-    });
+    const product = fmt.formatProduct(await readContract.getProduct(id), names);
+    entries.push({ product, ...(await loadInvitationData(id, product, members)) });
   }
   return entries;
 }
 
-// GET /invitations?address=&stage=
-async function getInvitationsFor(address, stage) {
+// =============================================================
+// NHỚ TẠM 10 GIÂY: mỗi lần đọc hết sản phẩm tốn nhiều lời gọi RPC (Sepolia chậm).
+// Các request gửi cùng lúc dùng chung một lần đọc. fresh = true (frontend gửi ngay
+// sau một giao dịch) luôn đọc lại, chỉ dùng chung với request fresh khác vừa bắt đầu.
+// =============================================================
+const ENTRY_CACHE_MS = 10 * 1000;
+const FRESH_SHARE_MS = 1000;
+let entryCache = { at: 0, data: null, pending: null, pendingAt: 0, pendingFresh: false };
+
+function canReusePending(fresh, now) {
+  if (!entryCache.pending) return false;
+  if (fresh) return entryCache.pendingFresh && now - entryCache.pendingAt < FRESH_SHARE_MS;
+  return true;
+}
+
+function getInvitationEntries(fresh) {
+  const now = Date.now();
+  if (!fresh && entryCache.data && now - entryCache.at < ENTRY_CACHE_MS) return Promise.resolve(entryCache.data);
+  if (canReusePending(fresh, now)) return entryCache.pending;
+  const pending = readAllEntries().then((data) => {
+    if (entryCache.pending === pending) entryCache = { at: Date.now(), data, pending: null, pendingAt: 0, pendingFresh: false };
+    return data;
+  });
+  pending.catch(() => {
+    if (entryCache.pending === pending) entryCache.pending = null;
+  });
+  entryCache = { ...entryCache, pending, pendingAt: now, pendingFresh: Boolean(fresh) };
+  return pending;
+}
+
+function clearEntryCache() {
+  entryCache = { at: 0, data: null, pending: null, pendingAt: 0, pendingFresh: false };
+}
+
+// GET /invitations?address=&stage=&fresh=1
+async function getInvitationsFor(address, stage, fresh) {
   requireAddress(address, 'address');
   const stageFilter = parseStage(stage);
   if (!invitationsSupported()) return [];
-  return invitationLogic.invitationsFor(await getInvitationEntries(), address, stageFilter);
+  return invitationTasks.invitationsFor(await getInvitationEntries(fresh), address, stageFilter);
 }
 
-// GET /invitations/to-send?address=
-async function getInvitesToSend(address) {
+// GET /invitations/to-send?address=&fresh=1
+async function getInvitesToSend(address, fresh) {
   requireAddress(address, 'address');
   if (!invitationsSupported()) return [];
-  return invitationLogic.invitesToSend(await getInvitationEntries(), address);
+  return invitationTasks.invitesToSend(await getInvitationEntries(fresh), address);
+}
+
+// GET /invitations/blocked?fresh=1 (v1.3)
+async function getBlockedTasks(fresh) {
+  if (!invitationsSupported()) return [];
+  return invitationTasks.blockedTasks(await getInvitationEntries(fresh));
 }
 
 // =============================================================
@@ -236,6 +303,7 @@ async function sendTx(from, method, args) {
   await contract[method].staticCall(...args);
   const tx = await contract[method](...args);
   const receipt = await tx.wait();
+  clearEntryCache(); // dữ liệu lời mời / giao nhận vừa đổi
   return { success: true, txHash: receipt.hash, blockNumber: receipt.blockNumber, receipt };
 }
 
@@ -295,10 +363,26 @@ async function decline(from, id, body) {
   return txResult(await sendTx(from, 'declineInvitation', [parseId(id), parseTask(body.task)]));
 }
 
+// v1.3 (Ganache): bên gửi xác nhận đã giao; người mời huỷ; admin chuyển nhiệm vụ
+async function send(from, id, note) {
+  return txResult(await sendTx(from, 'confirmSent', [parseId(id), note || '']));
+}
+
+async function cancel(from, id, body) {
+  return txResult(await sendTx(from, 'cancelInvitation', [parseId(id), parseTask(body.task)]));
+}
+
+async function reassign(from, id, body) {
+  const args = [parseId(id), parseTask(body.task), requireAddress(body.invitee, 'invitee'), body.note || ''];
+  return txResult(await sendTx(from, 'reassignTask', args));
+}
+
 module.exports = {
   getHealth, getOwner, getAccounts, getParticipants, getParticipant,
   getProducts, getProductDetail, getAllHistories, getEvents,
   registerParticipant, createProduct, pickUp, receive, sell,
   // v1.2: lời mời
   invitationsSupported, getInvitationsFor, getInvitesToSend, invite, accept, decline,
+  // v1.3: giao nhận hai đầu, huỷ lời mời, admin chuyển nhiệm vụ
+  getBlockedTasks, send, cancel, reassign,
 };

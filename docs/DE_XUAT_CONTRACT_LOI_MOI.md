@@ -1,3 +1,6 @@
+> **Trạng thái:** đã triển khai ở v1.2. Từ v1.3 (giao nhận hai đầu, R1–R6) xem `docs/QUY_TRINH_GIAO_NHAN.md` —
+> một số quy tắc dưới đây đã thay đổi (vd. `Nhiem vu da qua` nay áp dụng khi *chặng đã bắt đầu*).
+
 # Đề xuất thay đổi — Contract v1.2: Lời mời tham gia quy trình
 
 | Mục | Nội dung |

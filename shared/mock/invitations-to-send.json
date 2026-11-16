@@ -12,10 +12,14 @@
         "roleText": "Vận chuyển",
         "invitee": "",
         "inviteeName": "",
+        "valid": false,
         "inviter": "0xE11BA2b4D45Eaed5996Cd0823791E0C93114882d",
         "inviterName": "NPP Miền Bắc",
+        "inviterValid": true,
         "state": "none",
-        "stateText": "Chưa mời"
+        "stateText": "Chưa mời",
+        "canInvite": true,
+        "canCancel": false
       },
       {
         "task": 3,
@@ -24,10 +28,14 @@
         "roleText": "Nhà bán lẻ",
         "invitee": "",
         "inviteeName": "",
+        "valid": false,
         "inviter": "0xE11BA2b4D45Eaed5996Cd0823791E0C93114882d",
         "inviterName": "NPP Miền Bắc",
+        "inviterValid": true,
         "state": "none",
-        "stateText": "Chưa mời"
+        "stateText": "Chưa mời",
+        "canInvite": true,
+        "canCancel": false
       }
     ]
   }

@@ -56,11 +56,12 @@ router.post('/', async (req, res, next) => {
 });
 
 // =============================================================
-// 3 HÀNH ĐỘNG CHUYỂN TRẠNG THÁI: body { from, note }
+// HÀNH ĐỘNG GIAO NHẬN / BÁN: body { from, note } (chỉ Ganache local)
 // =============================================================
-const ACTIONS = { pickup: 'pickUp', receive: 'receive', sell: 'sell' };
+// v1.3: send = bên gửi xác nhận đã giao; pickup / receive = bên nhận xác nhận đã nhận
+const ACTIONS = { pickup: 'pickUp', receive: 'receive', sell: 'sell', send: 'send' };
 
-router.post('/:id/:action(pickup|receive|sell)', async (req, res, next) => {
+router.post('/:id/:action(pickup|receive|sell|send)', async (req, res, next) => {
   try {
     const method = ACTIONS[req.params.action];
     res.json(await service[method](req.body.from, req.params.id, req.body.note));
@@ -73,10 +74,12 @@ router.post('/:id/:action(pickup|receive|sell)', async (req, res, next) => {
 // v1.2 LỜI MỜI (chỉ Ganache local, giống pickup/receive/sell):
 //   invite  body { from, task, invitee }
 //   accept  body { from, task }
-//   decline body { from, task }
+//   decline body { from, task }   (v1.3: cũng dùng để rút lui sau khi đã nhận)
+//   cancel  body { from, task }   (v1.3: người mời huỷ)
+//   reassign body { from, task, invitee, note } (v1.3: admin chuyển nhiệm vụ)
 // Trên Sepolia doanh nghiệp tự ký các hàm này trong MetaMask.
 // =============================================================
-router.post('/:id/:action(invite|accept|decline)', async (req, res, next) => {
+router.post('/:id/:action(invite|accept|decline|cancel|reassign)', async (req, res, next) => {
   try {
     res.json(await service[req.params.action](req.body.from, req.params.id, req.body));
   } catch (err) {

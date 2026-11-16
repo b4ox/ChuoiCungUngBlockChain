@@ -2,8 +2,9 @@
 // SEED DỮ LIỆU DEMO (npm run seed)
 // Chạy trên Ganache vừa khởi động + contract vừa deploy:
 //   - Đăng ký 4 thành viên (Account 1..4)
-//   - Tạo 3 sản phẩm ở 3 trạng thái: Đã bán, Ở nhà phân phối, Đã sản xuất
+//   - Tạo 4 sản phẩm: Đã bán, Ở nhà phân phối, Đã sản xuất, Đang giao dở (1 đầu đã xác nhận)
 //   - v1.2: nếu contract có lời mời thì mời / chấp nhận trước mỗi bước
+//   - v1.3: mỗi bước giao nhận do bên gửi và bên nhận cùng xác nhận
 // Dùng chính service của backend nên cũng là bài kiểm tra luồng 6 bước.
 // =============================================================
 const { provider, readContract, RPC_URL, CONTRACT_ADDRESS, CHAIN_ID, GANACHE_CHAIN_ID } = require('../config/blockchain');
@@ -23,22 +24,33 @@ const PRODUCTS = [
     description: 'Cà phê nhân rang mộc 1kg', steps: 2 },
   { name: 'Gạo ST25 – Lô 15', origin: 'Sóc Trăng',
     description: 'Gạo đóng túi 5kg', steps: 0 },
+  // half: bên gửi của bước tiếp theo đã xác nhận, bên nhận chưa (demo xác nhận hai đầu)
+  { name: 'Mật ong rừng U Minh – Lô 03', origin: 'Cà Mau',
+    description: 'Mật ong nguyên chất chai 500ml', steps: 1, half: true },
 ];
 
 // =============================================================
-// ĐƯA SẢN PHẨM ĐI QUA "steps" bước sau khi tạo (tối đa 5 bước)
+// ĐƯA SẢN PHẨM ĐI QUA "steps" bước sau khi tạo (tối đa 5 bước).
+// v1.3: bước 0..3 cần bên gửi (send) và bên nhận (pickUp / receive) cùng xác nhận.
+// half = true: làm thêm nửa bước kế tiếp (chỉ bên gửi xác nhận).
 // =============================================================
-async function moveProduct(acc, id, steps) {
-  const actions = [
-    () => service.pickUp(acc[2], id, 'Nhận tại xưởng'),
-    () => service.receive(acc[3], id, 'Nhập kho nhà phân phối'),
-    () => service.pickUp(acc[2], id, 'Xuất kho tới cửa hàng'),
-    () => service.receive(acc[4], id, 'Lên kệ cửa hàng'),
-    () => service.sell(acc[4], id, 'Bán cho khách hàng'),
-  ];
+const STEPS = [
+  { send: [1, 'Đã giao tại xưởng'], receive: (acc, id) => service.pickUp(acc[2], id, 'Nhận tại xưởng') },
+  { send: [2, 'Đã giao tới kho NPP'], receive: (acc, id) => service.receive(acc[3], id, 'Nhập kho nhà phân phối') },
+  { send: [3, 'Đã xuất kho'], receive: (acc, id) => service.pickUp(acc[2], id, 'Xuất kho tới cửa hàng') },
+  { send: [2, 'Đã giao tới cửa hàng'], receive: (acc, id) => service.receive(acc[4], id, 'Lên kệ cửa hàng') },
+];
+
+async function moveProduct(acc, id, steps, half) {
   for (let i = 0; i < steps; i++) {
-    await actions[i]();
+    if (i === 4) {
+      await service.sell(acc[4], id, 'Bán cho khách hàng');
+      continue;
+    }
+    if (service.invitationsSupported()) await service.send(acc[STEPS[i].send[0]], id, STEPS[i].send[1]);
+    await STEPS[i].receive(acc, id);
   }
+  if (half && steps < 4) await service.send(acc[STEPS[steps].send[0]], id, STEPS[steps].send[1]);
 }
 
 // =============================================================
@@ -46,6 +58,7 @@ async function moveProduct(acc, id, steps) {
 // được gửi lúc tạo sản phẩm; mỗi sản phẩm để lại một tình huống demo:
 //   steps 0: GHN và NPP mới được mời, chưa trả lời -> tab "Lời mời"
 //   steps 2: đã nhận nhiệm vụ 0, 1; NPP chưa mời chặng 2 -> "Cần mời"
+//   steps 1 + half: vận chuyển đã xác nhận giao, NPP cần xác nhận đã nhận
 //   steps 5: đủ 4 nhiệm vụ đã chấp nhận
 // =============================================================
 async function prepareInvites(acc, id, steps) {
@@ -82,8 +95,8 @@ async function main() {
     const input = service.invitationsSupported() ? { ...p, transporter: acc[2], distributor: acc[3] } : p;
     const { productId } = await service.createProduct(acc[1], input);
     await prepareInvites(acc, productId, p.steps);
-    await moveProduct(acc, productId, p.steps);
-    console.log(`  + Sản phẩm #${productId}: ${p.name} (đi ${p.steps} bước)`);
+    await moveProduct(acc, productId, p.steps, p.half);
+    console.log(`  + Sản phẩm #${productId}: ${p.name} (đi ${p.steps} bước${p.half ? ' + nửa bước' : ''})`);
   }
   console.log('Seed xong.');
 }

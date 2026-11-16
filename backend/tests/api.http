@@ -41,7 +41,10 @@ Content-Type: application/json
 ### =============================================================
 ### LUỒNG 6 BƯỚC cho sản phẩm vừa tạo — sửa @id cho đúng productId ở bước 7
 ### =============================================================
-@id = 4
+@id = 5
+
+### LƯU Ý v1.3: mỗi bước dưới đây chỉ là xác nhận của BÊN NHẬN. Trước đó phải mời + nhận lời (mục v1.2)
+### và bên gửi xác nhận bằng POST /products/{{id}}/send (mục v1.3, cuối file) thì trạng thái mới đổi.
 
 ### 8a. Vận chuyển nhận hàng tại xưởng (0 -> 1)
 POST {{api}}/products/{{id}}/pickup
@@ -185,3 +188,58 @@ POST {{api}}/products/{{id}}/accept
 Content-Type: application/json
 
 { "from": "{{transporter}}", "task": 7 }
+
+### ===== v1.3: giao nhận hai đầu, thay đổi lời mời =====
+### Mỗi bước cần bên gửi (send) và bên nhận (pickup / receive) cùng xác nhận, thứ tự nào cũng được.
+### Seed v1.3 để lại: #3 lời mời chưa trả lời, #4 vận chuyển đã xác nhận giao, NPP chưa xác nhận nhận.
+
+### 33. Bên gửi xác nhận đã giao (bước 0: nhà sản xuất)
+POST {{api}}/products/{{id}}/send
+Content-Type: application/json
+
+{ "from": "{{manufacturer}}", "note": "Đã giao tại xưởng" }
+
+### 9c. NPP xác nhận đã nhận sản phẩm #4 (vận chuyển đã xác nhận giao trong seed)
+POST {{api}}/products/4/receive
+Content-Type: application/json
+
+{ "from": "{{distributor}}", "note": "Nhập kho" }
+
+### 6b. Chi tiết sản phẩm #4: có handovers (4 bước giao nhận)
+GET {{api}}/products/4
+
+### 27b. Việc của nhà sản xuất (dòng task = null là bước giao hàng 0); fresh=1 bỏ qua nhớ tạm
+GET {{api}}/invitations?address={{manufacturer}}&fresh=1
+
+### 34. Người mời huỷ lời mời (khi chặng chưa bắt đầu)
+POST {{api}}/products/3/cancel
+Content-Type: application/json
+
+{ "from": "{{manufacturer}}", "task": 0 }
+
+### 31b. Rút lui sau khi đã nhận lời (khi chặng chưa bắt đầu)
+POST {{api}}/products/{{id}}/decline
+Content-Type: application/json
+
+{ "from": "{{transporter}}", "task": 0 }
+
+### 32. Nhiệm vụ có bên đã nhận nhưng bị khoá (cho quản trị viên)
+GET {{api}}/invitations/blocked
+
+### 35. Admin chuyển nhiệm vụ cho ví khác (bên cũ phải không còn hợp lệ, vd. đã bị deactivate)
+POST {{api}}/products/4/reassign
+Content-Type: application/json
+
+{ "from": "{{admin}}", "task": 0, "invitee": "{{account5}}", "note": "Chuyển do bên cũ bị khoá" }
+
+### Lỗi: xác nhận gửi hai lần -> "Da xac nhan gui roi"
+POST {{api}}/products/4/send
+Content-Type: application/json
+
+{ "from": "{{transporter}}", "note": "" }
+
+### Lỗi: đổi vai trò ví đã đăng ký -> "Khong the doi vai tro"
+POST {{api}}/participants
+Content-Type: application/json
+
+{ "from": "{{admin}}", "account": "{{transporter}}", "name": "x", "role": 4 }
