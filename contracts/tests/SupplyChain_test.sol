@@ -8,99 +8,60 @@ import "./helpers/NonAdminCaller.sol";
 
 contract SupplyChainTest is JourneyFixture {
     SupplyChain private chain;
+    Team private team;
 
-    // Kiểm tra luồng nghiệp vụ hoặc chuẩn bị dữ liệu độc lập.
+    // Một sản phẩm đi hết hành trình (Sold) để kiểm tra lỗi sau khi bán.
     function beforeAll() public {
-        JourneyDistributor distributor;
-        (chain, distributor) = newProduct(true);
-        finishJourney(chain, distributor);
-
-        // Người gọi phải đúng vai vận chuyển để kiểm tra lỗi trạng thái.
-        useRole(SupplyChain.Role.Transporter);
+        Team memory created;
+        (chain, created) = newProduct(true);
+        finishJourney(chain, created);
+        team = created;
     }
 
-    // Kiểm tra luồng nghiệp vụ hoặc chuẩn bị dữ liệu độc lập.
+    // Sản phẩm đã bán thì vận chuyển không nhận hàng được nữa, dữ liệu giữ nguyên.
     function cannotPickUpSoldProduct() public {
         bool wasRejected = false;
-
-        try chain.pickUpProduct(1, "Thu lay hang da ban") {
+        try team.transporter1.pickUp(chain, 1) {
             Assert.ok(false, "Loi: van lay duoc san pham da ban");
         } catch Error(string memory reason) {
             wasRejected = true;
-
-            Assert.equal(
-                reason,
-                "Chua the van chuyen o trang thai nay",
-                "Cau loi khong dung"
-            );
-        } catch (bytes memory) {
-            Assert.ok(false, "That bai nhung khong tra dung dang loi");
+            Assert.equal(reason, "Chua the van chuyen o trang thai nay", "Cau loi khong dung");
         }
-
         Assert.ok(wasRejected, "Phai bi tu choi bang loi co ly do");
 
         SupplyChain.Product memory product = chain.getProduct(1);
-        SupplyChain.History[] memory history = chain.getHistory(1);
-
-        Assert.equal(
-            uint256(product.status),
-            uint256(SupplyChain.Status.Sold),
-            "Trang thai phai van la Sold"
-        );
-
-        Assert.equal(
-            history.length,
-            uint256(6),
-            "Lich su phai van co 6 ban ghi"
-        );
-
-        Assert.equal(
-            product.currentOwner,
-            address(this),
-            "Nguoi giu hang khong duoc thay doi"
-        );
+        Assert.equal(uint256(product.status), uint256(SupplyChain.Status.Sold), "Trang thai phai van la Sold");
+        Assert.equal(chain.getHistory(1).length, uint256(6), "Lich su phai van co 6 ban ghi");
+        Assert.equal(product.currentOwner, address(team.retailer), "Nguoi giu hang khong duoc thay doi");
     }
 
-    // Kiểm tra luồng nghiệp vụ hoặc chuẩn bị dữ liệu độc lập.
-function nonAdminCannotRegisterParticipant() public {
-    // Contract mới do hàm này tạo, nên owner là contract test hiện tại.
-    SupplyChain target = new SupplyChain();
-
-    // Tạo người gọi riêng, không phải owner của target.
-    NonAdminCaller caller = new NonAdminCaller();
-    bool wasRejected = false;
-
-    try caller.register(target) {
-        Assert.ok(false, "Loi: nguoi khong phai admin van dang ky duoc");
-    } catch Error(string memory reason) {
-        wasRejected = true;
-        Assert.equal(
-            reason,
-            "Chi admin duoc phep",
-            "Cau loi khong dung"
-        );
-    } catch (bytes memory) {
-        Assert.ok(false, "Khong nhan duoc loi co ly do");
+    // Người không phải admin không đăng ký được thành viên.
+    function nonAdminCannotRegisterParticipant() public {
+        SupplyChain target = new SupplyChain();
+        NonAdminCaller caller = new NonAdminCaller();
+        bool wasRejected = false;
+        try caller.register(target) {
+            Assert.ok(false, "Loi: nguoi khong phai admin van dang ky duoc");
+        } catch Error(string memory reason) {
+            wasRejected = true;
+            Assert.equal(reason, "Chi admin duoc phep", "Cau loi khong dung");
+        }
+        Assert.ok(wasRejected, "Phai tu choi nguoi khong phai admin");
+        Assert.equal(target.getAllParticipants().length, uint256(0), "Khong duoc them thanh vien khi bi tu choi");
     }
 
-    Assert.ok(wasRejected, "Phai tu choi nguoi khong phai admin");
-
-    address[] memory accounts = target.getAllParticipants();
-    Assert.equal(
-        accounts.length,
-        uint256(0),
-        "Khong duoc them thanh vien khi bi tu choi"
-    );
-}
-
-    // Kiểm tra luồng nghiệp vụ hoặc chuẩn bị dữ liệu độc lập.
-
-
-    // Kiểm tra luồng nghiệp vụ hoặc chuẩn bị dữ liệu độc lập.
-    function useRole(SupplyChain.Role _role) internal {
-        chain.registerParticipant(address(this), "Tai khoan test", _role);
+    // v1.3 (R6): không đổi được vai trò của ví đã đăng ký; mở khoá lại đúng vai trò cũ thì được.
+    function cannotChangeRole() public {
+        SupplyChain target = new SupplyChain();
+        target.registerParticipant(address(this), "Nha san xuat", SupplyChain.Role.Manufacturer);
+        try target.registerParticipant(address(this), "Nha san xuat", SupplyChain.Role.Retailer) {
+            Assert.ok(false, "Khong duoc doi vai tro");
+        } catch Error(string memory reason) {
+            Assert.equal(reason, "Khong the doi vai tro", "Sai cau loi");
+        }
+        target.registerParticipant(address(this), "Ten moi", SupplyChain.Role.Manufacturer);
+        (string memory name, SupplyChain.Role role,) = target.participants(address(this));
+        Assert.equal(name, "Ten moi", "Phai doi duoc ten");
+        Assert.equal(uint256(role), uint256(SupplyChain.Role.Manufacturer), "Vai tro phai giu nguyen");
     }
-
-    // Kiểm tra luồng nghiệp vụ hoặc chuẩn bị dữ liệu độc lập.
-
 }
