@@ -7,6 +7,7 @@
 - Node.js theo cấu hình dự án: 20.
 - Solidity compiler: 0.8.20.
 - EVM version: paris.
+- Optimization: **bật, 200 runs** (từ v1.3 contract ≈ 24.2KB khi tắt, sát giới hạn 24KB).
 - Blockchain: Ganache local.
 - RPC: http://127.0.0.1:7545.
 - Chain ID: 1337.
@@ -40,7 +41,7 @@ Giữ cả hai terminal chạy.
 
 1. Mở Remix, kết nối RemixD với thư mục contracts.
 2. Mở SupplyChain.sol.
-3. Chọn compiler 0.8.20, EVM version paris.
+3. Chọn compiler 0.8.20, EVM version paris, bật Enable optimization (200).
 4. Compile SupplyChain.sol.
 5. Chọn Custom - External Http Provider.
 6. Nhập http://127.0.0.1:7545.
@@ -63,7 +64,7 @@ Chuẩn bị một ví MetaMask riêng cho quản trị viên. Ví nào deploy t
 
 1. MetaMask → bật **Show test networks** → chọn mạng **Sepolia**.
 2. Lấy SepoliaETH miễn phí từ một faucet (ví dụ Google Cloud Web3 Faucet). Deploy tốn vài phần nghìn đến khoảng 0,02 SepoliaETH tuỳ giá gas lúc đó.
-3. Remix → Solidity Compiler: 0.8.20, Advanced → EVM version **paris**, Compile `SupplyChain.sol`.
+3. Remix → Solidity Compiler: 0.8.20, Advanced → EVM version **paris**, bật **Enable optimization (200)**, Compile `SupplyChain.sol`.
 4. Deploy & Run → Environment: **Injected Provider - MetaMask**. MetaMask hỏi kết nối, chọn ví quản trị.
    Kiểm tra dòng bên dưới ghi `Sepolia (11155111) network`.
 5. Bấm **Deploy** → MetaMask hiện phí gas → **Xác nhận**. Chờ khoảng 15 giây.
